@@ -1,0 +1,30 @@
+# Environment
+.env
+crewai-env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE
+.DS_Store
+.vscode/ 
+.idea/
+
+# Project-specific
+lib/
+logs/
+output/
+*.log
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Node.js
+node_modules/
+external_frontend/dist/
