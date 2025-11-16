@@ -39,3 +39,44 @@ class HospitalAffiliation(BaseModel):
 
 class RiskFlag(BaseModel):
     """Risk flag with severity level."""
+    flag: str
+    severity: str = Field(..., description="LOW, MEDIUM, HIGH, CRITICAL")
+    description: Optional[str] = None
+
+
+class ValidationIssue(BaseModel):
+    """Validation issue details."""
+    issue: str
+    severity: str = Field(..., description="LOW, MEDIUM, HIGH, CRITICAL")
+    source: str
+    recommendation: Optional[str] = None
+
+
+class ValidationResult(BaseModel):
+    """Complete validation result for a single provider."""
+    provider_id: str = Field(..., description="Unique identifier for the provider record")
+    input_data: Dict[str, Any] = Field(..., description="Original input data")
+    
+    # Identity Information
+    provider_name: str
+    npi_number: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    
+    # Verified Information
+    verified_phone: Optional[str] = None
+    verified_address: Optional[str] = None
+    verified_specialty: Optional[str] = None
+    
+    # License Information
+    license_info: Optional[LicenseInfo] = None
+    
+    # Hospital Affiliation
+    hospital_affiliation: Optional[HospitalAffiliation] = None
+    
+    # Confidence Scores
+    confidence_scores: ConfidenceScores
+    
+    # Data Sources Checked
+    sources_checked: List[str] = Field(default_factory=list, description="List of data sources queried")
+    sources_matched: List[str] = Field(default_factory=list, description="Sources with matching data")
+    
