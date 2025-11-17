@@ -16,3 +16,21 @@ function App() {
     return (
         <Router>
             <Routes>
+                <Route path="/map" element={<MapPage />} />
+                <Route path="/" element={<Layout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="directory" element={<Directory />} />
+                    <Route path="provider/:id" element={<ProviderDetail />} />
+                    <Route path="validation" element={<Validation />} />
+                    <Route path="drift-monitoring" element={<DriftMonitoring />} />
+                    <Route path="review" element={<ReviewQueue />} />
+                    <Route path="bulk-outreach" element={<BulkOutreach />} />
+                    <Route path="logs" element={<Logs />} />
+                    <Route path="settings" element={<Settings />} />
+                </Route>
+            </Routes>
+        </Router>
+    );
+}
+
+export default App;
