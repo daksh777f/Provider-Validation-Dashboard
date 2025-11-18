@@ -56,3 +56,61 @@ const MapPage = () => {
         };
 
         fetchProviders();
+    }, []);
+
+    return (
+        <div className="w-screen h-screen bg-slate-950 relative overflow-hidden flex flex-col">
+            {/* Header / Nav */}
+            <div className="absolute top-0 left-0 right-0 z-20 p-6 flex justify-between items-start pointer-events-none">
+                <button
+                    onClick={() => navigate('/')}
+                    className="pointer-events-auto flex items-center gap-2 px-4 py-2 bg-slate-900/50 hover:bg-slate-800/80 backdrop-blur-md border border-white/10 rounded-full text-white transition-all group"
+                >
+                    <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                    Back to Dashboard
+                </button>
+
+                <div className="glass-panel px-6 py-3 rounded-xl flex items-center gap-3">
+                    <Activity className="text-neon-blue animate-pulse" size={24} />
+                    <div>
+                        <h1 className="text-xl font-poster text-white tracking-wide">Global Network</h1>
+                        <p className="text-xs text-slate-400 font-mono">LIVE MONITORING</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Map Area */}
+            <div className="flex-1 w-full h-full relative">
+                {loading ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                ) : (
+                    <WorldMap regionData={regionData} />
+                )}
+            </div>
+
+            {/* Floating Stats Footer */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-full max-w-4xl px-4">
+                <div className="glass-panel p-6 rounded-2xl flex flex-wrap justify-between items-center gap-8 pointer-events-auto border border-white/10 shadow-2xl bg-slate-900/80 backdrop-blur-xl">
+                    <div className="text-center min-w-[100px]">
+                        <p className="text-slate-400 text-sm mb-1 uppercase tracking-wider font-semibold">Total Nodes</p>
+                        <p className="text-4xl font-display font-bold text-white">{providers.length}</p>
+                    </div>
+                    <div className="w-px h-12 bg-white/10 hidden md:block"></div>
+                    <div className="text-center min-w-[100px]">
+                        <p className="text-slate-400 text-sm mb-1 uppercase tracking-wider font-semibold">North America</p>
+                        <p className="text-4xl font-display font-bold text-neon-blue">{regionData.east + regionData.west + regionData.central}</p>
+                    </div>
+                    <div className="w-px h-12 bg-white/10 hidden md:block"></div>
+                    <div className="text-center min-w-[100px]">
+                        <p className="text-slate-400 text-sm mb-1 uppercase tracking-wider font-semibold">International</p>
+                        <p className="text-4xl font-display font-bold text-amber-400">{regionData.international}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default MapPage;
