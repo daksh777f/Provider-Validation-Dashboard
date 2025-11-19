@@ -38,3 +38,43 @@ const ProviderDetail = () => {
             console.error('Error fetching verification history:', error);
         }
     };
+
+    const [conversation, setConversation] = useState(() => {
+        const cached = sessionStorage.getItem(`conversation_${id}`);
+        return cached ? JSON.parse(cached) : [];
+    });
+
+    // Call verification data from Omni Dimension webhook
+    const [callVerification, setCallVerification] = useState(() => {
+        const cached = sessionStorage.getItem(`call_verification_${id}`);
+        return cached ? JSON.parse(cached) : null;
+    });
+    const [callLoading, setCallLoading] = useState(false);
+    const [callPollingEnabled, setCallPollingEnabled] = useState(false);
+
+    // Fetch call verification data - only when polling is enabled
+    useEffect(() => {
+        if (!callPollingEnabled) return;
+
+        const fetchCallData = async () => {
+            if (!id) return;
+
+            try {
+                setCallLoading(true);
+                const response = await axios.get(`http://localhost:8000/verify/call-data/${id}`);
+
+                if (response.data.success && response.data.call_verification) {
+                    setCallVerification(response.data.call_verification);
+                }
+            } catch (error) {
+                console.error('Error fetching call verification:', error);
+            } finally {
+                setCallLoading(false);
+            }
+        };
+
+        fetchCallData();
+        // Poll for updates every 10 seconds
+        const interval = setInterval(fetchCallData, 10000);
+        return () => clearInterval(interval);
+    }, [id, callPollingEnabled]);
