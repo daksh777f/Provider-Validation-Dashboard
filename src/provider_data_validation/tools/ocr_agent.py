@@ -43,3 +43,48 @@ Extract all names now:"""
         
         print("  [LLM] Sending image to LLaVA...")
         
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "llava:7b",
+                "prompt": prompt,
+                "images": [img_base64],
+                "stream": False,
+                "options": {"temperature": 0.1, "num_predict": 300}
+            },
+            timeout=60
+        )
+        
+        if response.status_code != 200:
+            print(f"  [ERROR] Ollama API error: {response.status_code}")
+            return ""
+        
+        result = response.json()
+        raw_text = result.get("response", "")
+        
+        # Stage 1: Basic deduplication
+        lines = raw_text.strip().split('\n')
+        unique = []
+        seen = set()
+        for line in lines:
+            line = line.strip()
+            if line and line.lower() not in seen:
+                unique.append(line)
+                seen.add(line.lower())
+        
+        raw_dedup = '\n'.join(unique)
+        print(f"  [SUCCESS] LLaVA: {len(unique)} names ({len(lines)} total)")
+        
+        # Stage 2: Clean with llama3.1
+        cleaned = clean_names_with_llm(raw_dedup)
+        return cleaned
+            
+            
+    except requests.exceptions.ConnectionError:
+        print("  [ERROR] Could not connect to Ollama. Is it running?")
+        return ""
+    except Exception as e:
+        print(f"  [ERROR] Vision LLM extraction failed: {e}")
+        return ""
+
+
