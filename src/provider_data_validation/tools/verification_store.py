@@ -44,3 +44,49 @@ except Exception:
 # In-memory fallback storage
 _sessions: Dict[str, dict] = {}
 
+
+def _to_dict(session) -> dict:
+    if isinstance(session, VerificationSession):
+        try:
+            return session.model_dump()
+        except Exception:
+            # Fallback for pydantic v1 projects
+            return session.dict()
+    elif isinstance(session, dict):
+        return session
+    else:
+        return {}
+
+
+def create_session(session: VerificationSession) -> None:
+    data = _to_dict(session)
+
+    if redis_client:
+        key = f"verification:session:{data['session_id']}"
+        redis_client.set(key, json.dumps(data, default=str))
+        # index by phone
+        phone = data.get("phone")
+        if phone:
+            redis_client.set(f"verification:phone:{phone}", data["session_id"])
+        return
+
+    if db_available:
+        db = SessionLocal()
+        try:
+            obj = db.query(VerificationSessionDB).filter_by(session_key=data["session_id"]).one_or_none()
+            if obj is None:
+                obj = VerificationSessionDB(
+                    provider_id=data.get("provider_id"),
+                    session_key=data["session_id"],
+                    data=data,
+                )
+                db.add(obj)
+            else:
+                obj.data = data
+                obj.provider_id = data.get("provider_id")
+            db.commit()
+        except Exception:
+            db.rollback()
+        finally:
+            db.close()
+        return
