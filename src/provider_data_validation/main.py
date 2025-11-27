@@ -47,3 +47,52 @@ def kickoff_data_intake_crew():
     use_pdf_tool = "pdf_path" in inputs and bool(inputs["pdf_path"])
     crew = ProviderIntakeCrew(use_pdf_tool=use_pdf_tool).crew()
 
+    result = crew.kickoff(inputs)
+    clean_output = result.tasks_output[-1]
+
+    print(clean_output)
+
+def kickoff_data_validation_crew():
+    """Test the data validation crew - extracts and validates provider data."""
+    from .crews.data_validation_crew.data_validation_crew import extract_provider_data, validate_provider_data
+    import json
+
+    provider_name = "Dr Aarav Mehta"
+    
+    print(f"\n{'='*60}")
+    print(f"Testing Provider Validation for: {provider_name}")
+    print(f"{'='*60}\n")
+    
+    # Direct extraction without relying on agent
+    print("[STEP 1] Extracting data from all sources...")
+    extracted_data = extract_provider_data(provider_name)
+    print("\n[EXTRACTED DATA]")
+    print(json.dumps(extracted_data, indent=2))
+    
+    # Programmatic validation (no LLM needed)
+    print("\n[STEP 2] Validating extracted data...")
+    validation_result = validate_provider_data(extracted_data)
+    print("\n[VALIDATION RESULT]")
+    print(json.dumps(validation_result, indent=2))
+    
+    print(f"\n{'='*60}")
+    print(f"Validation Complete!")
+    print(f"Overall Confidence: {validation_result['overall_validation_confidence']}")
+    print(f"Sources Matched: {', '.join(validation_result['identity']['matched_sources'])}")
+    print(f"{'='*60}\n")
+    
+    return validation_result
+
+
+def kickoff_drift_monitoring_crew():
+    """Test the drift monitoring crew - detects credential changes over time."""
+    from .crews.drift_monitoring_crew import DriftMonitoringCrew
+    import json
+
+    provider_name = "Dr Shalini Rao"
+    
+    print(f"\n{'='*60}")
+    print(f"Testing Drift Monitoring for: {provider_name}")
+    print(f"{'='*60}\n")
+    
+    print("Comparing current data against historical snapshot (2025-11-01)...")
