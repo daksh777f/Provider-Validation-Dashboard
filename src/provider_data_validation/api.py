@@ -82,3 +82,45 @@ async def health_check():
             resp = httpx.get(settings.OLLAMA_BASE_URL + "/api/tags", timeout=2)
             ollama_status = "operational" if resp.status_code == 200 else "unavailable"
         except Exception:
+            ollama_status = "unavailable"
+
+    return HealthCheckResponse(
+        status="healthy",
+        components={
+            "api": "operational",
+            "validation_service": "operational",
+            "file_processor": "operational",
+            "ollama": ollama_status
+        },
+        system_info={
+            "workers": 1,
+            "queued_jobs": ValidationService.get_batch_count() if hasattr(ValidationService, 'get_batch_count') else 0
+        }
+    )
+
+
+@app.get("/stats", response_model=ValidationStatsResponse)
+async def get_stats():
+    """Get validation statistics."""
+    all_results = []
+    batches = []
+    if hasattr(ValidationService, 'get_all_results'):
+        batches = ValidationService.get_all_results()
+    else:
+        try:
+            batches = list(ValidationService.batch_jobs.values())
+        except Exception:
+            batches = []
+
+    for batch in batches:
+        # batch may be a dict (from Redis) or a model
+        results = batch.get('results') if isinstance(batch, dict) else getattr(batch, 'results', [])
+        if results:
+            all_results.extend(results)
+
+    total = len(all_results)
+
+    def _status_of(r):
+        return r.get('validation_status') if isinstance(r, dict) else getattr(r, 'validation_status', None)
+
+    def _issues_of(r):
