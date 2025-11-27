@@ -96,3 +96,54 @@ def kickoff_drift_monitoring_crew():
     print(f"{'='*60}\n")
     
     print("Comparing current data against historical snapshot (2025-11-01)...")
+    print("Expected changes:")
+    print("  - License status: Active → Suspended")
+    print("  - Possible phone/affiliation changes")
+    print()
+    
+    try:
+        crew = DriftMonitoringCrew()
+        result = crew.crew().kickoff(inputs={"provider_name": provider_name})
+        
+        print(f"\n{'='*60}")
+        print("DRIFT MONITORING RESULT:")
+        print(f"{'='*60}")
+        print(result)
+        print(f"\n{'='*60}\n")
+        
+        return result
+        
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+if __name__ == "__main__":
+    import sys
+    
+    # Allow user to choose which crew to test
+    if len(sys.argv) > 1:
+        crew_choice = sys.argv[1].lower()
+    else:
+        print("\nAvailable crews to test:")
+        print("  1. validation - Data Validation Crew")
+        print("  2. intake     - Data Intake Crew")
+        print("  3. drift      - Drift Monitoring Crew")
+        print("  4. notify     - Notification Crew")
+        print("\nUsage: python main.py [validation|intake|drift|notify]")
+        print("Running default: validation\n")
+        crew_choice = "validation"
+    
+    if crew_choice in ["validation", "1"]:
+        kickoff_data_validation_crew()
+    elif crew_choice in ["intake", "2"]:
+        kickoff_data_intake_crew()
+    elif crew_choice in ["drift", "3"]:
+        kickoff_drift_monitoring_crew()
+    elif crew_choice in ["notify", "notification", "4"]:
+        kickoff_notification_crew()
+    else:
+        print(f"Unknown crew: {crew_choice}")
+        print("Valid options: validation, intake, drift, notify")
