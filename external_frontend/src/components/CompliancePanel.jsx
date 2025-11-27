@@ -82,3 +82,45 @@ export default function CompliancePanel({ providerId, providerData }) {
         } finally {
             setLoading(false);
         }
+    };
+
+    if (loading) {
+        return (
+            <div className="bg-gray-900 rounded-lg shadow-lg p-6">
+                <div className="animate-pulse">
+                    <div className="h-8 bg-gray-700 rounded w-1/3 mb-4"></div>
+                    <div className="h-4 bg-gray-700 rounded w-2/3"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-gray-900 rounded-lg shadow-lg p-6">
+                <div className="flex items-center text-red-400">
+                    <XCircle className="w-5 h-5 mr-2" />
+                    <span>{error}</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (!compliance) {
+        return null;
+    }
+
+    const getRiskColor = (color) => {
+        const colors = {
+            green: 'bg-green-900/30 text-green-300 border-green-700 shadow-green-500/20',
+            yellow: 'bg-yellow-900/30 text-yellow-300 border-yellow-700 shadow-yellow-500/20',
+            orange: 'bg-orange-900/30 text-orange-300 border-orange-700 shadow-orange-500/20',
+            red: 'bg-red-900/30 text-red-300 border-red-700 shadow-red-500/20',
+            gray: 'bg-gray-800 text-gray-300 border-gray-700'
+        };
+        return colors[color] || colors.gray;
+    };
+
+    // Show initial calculation prompt if not calculated
+    if (compliance.risk_level === 'UNKNOWN' || !compliance.calculated_at) {
+        return (
