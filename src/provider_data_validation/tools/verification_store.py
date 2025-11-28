@@ -90,3 +90,49 @@ def create_session(session: VerificationSession) -> None:
         finally:
             db.close()
         return
+
+    # fallback in-memory
+    _sessions[data["session_id"]] = data
+
+
+def get_session(session_id: str) -> Optional[dict]:
+    if redis_client:
+        key = f"verification:session:{session_id}"
+        raw = redis_client.get(key)
+        return json.loads(raw) if raw else None
+
+    if db_available:
+        db = SessionLocal()
+        try:
+            obj = db.query(VerificationSessionDB).filter_by(session_key=session_id).one_or_none()
+            return obj.data if obj else None
+        finally:
+            db.close()
+
+    return _sessions.get(session_id)
+
+
+def get_session_by_phone(phone: str) -> Optional[dict]:
+    if redis_client:
+        sid = redis_client.get(f"verification:phone:{phone}")
+        if sid:
+            return get_session(sid)
+        return None
+
+    if db_available:
+        db = SessionLocal()
+        try:
+            # This uses JSON lookup; some DB backends differ in syntax but
+            # PostgreSQL + SQLAlchemy support this common pattern.
+            obj = db.query(VerificationSessionDB).filter(VerificationSessionDB.data["phone"].astext == phone).first()
+            return obj.data if obj else None
+        finally:
+            db.close()
+
+    # fallback
+    sid = None
+    for s in _sessions.values():
+        if s.get("phone") == phone:
+            sid = s.get("session_id")
+            break
+    return get_session(sid) if sid else None
