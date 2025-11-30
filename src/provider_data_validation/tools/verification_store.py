@@ -136,3 +136,49 @@ def get_session_by_phone(phone: str) -> Optional[dict]:
             sid = s.get("session_id")
             break
     return get_session(sid) if sid else None
+
+
+def update_session(session: VerificationSession) -> None:
+    data = _to_dict(session)
+    if not data:
+        return
+    if redis_client:
+        key = f"verification:session:{data['session_id']}"
+        redis_client.set(key, json.dumps(data, default=str))
+        phone = data.get("phone")
+        if phone:
+            redis_client.set(f"verification:phone:{phone}", data["session_id"])
+        return
+
+    if db_available:
+        db = SessionLocal()
+        try:
+            obj = db.query(VerificationSessionDB).filter_by(session_key=data["session_id"]).one_or_none()
+            if obj is None:
+                obj = VerificationSessionDB(
+                    provider_id=data.get("provider_id"),
+                    session_key=data["session_id"],
+                    data=data,
+                )
+                db.add(obj)
+            else:
+                obj.data = data
+                obj.provider_id = data.get("provider_id")
+            db.commit()
+        except Exception:
+            db.rollback()
+        finally:
+            db.close()
+        return
+
+    _sessions[data["session_id"]] = data
+
+
+def delete_session(session_id: str) -> None:
+    if redis_client:
+        sess = get_session(session_id)
+        if sess and sess.get("phone"):
+            redis_client.delete(f"verification:phone:{sess.get('phone')}")
+        redis_client.delete(f"verification:session:{session_id}")
+        return
+
