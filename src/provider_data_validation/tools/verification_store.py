@@ -182,3 +182,53 @@ def delete_session(session_id: str) -> None:
         redis_client.delete(f"verification:session:{session_id}")
         return
 
+    if db_available:
+        db = SessionLocal()
+        try:
+            obj = db.query(VerificationSessionDB).filter_by(session_key=session_id).one_or_none()
+            if obj:
+                db.delete(obj)
+                db.commit()
+        except Exception:
+            db.rollback()
+        finally:
+            db.close()
+        return
+
+    sess = _sessions.get(session_id)
+    if sess and sess.get("phone"):
+        _sessions.pop(session_id, None)
+
+
+def get_all_sessions() -> Dict[str, dict]:
+    if redis_client:
+        keys = redis_client.keys("verification:session:*")
+        out = {}
+        for k in keys:
+            sid = k.split(":")[-1]
+            raw = redis_client.get(k)
+            if raw:
+                out[sid] = json.loads(raw)
+        return out
+
+    if db_available:
+        out = {}
+        db = SessionLocal()
+        try:
+            for obj in db.query(VerificationSessionDB).all():
+                out[obj.session_key] = obj.data
+        finally:
+            db.close()
+        return out
+
+    return _sessions.copy()
+
+
+def get_provider_sessions(provider_id: str) -> list:
+    results = []
+    for sess in get_all_sessions().values():
+        pid = sess.get("provider_id")
+        if pid == provider_id:
+            results.append(sess)
+    return results
+
