@@ -22,3 +22,27 @@ drift_detection_task:
     - Return the exact JSON it provides
     - No markdown, no explanations
     - Output MUST be valid JSON
+  
+  expected_output: >
+    JSON object with array of change descriptions from the compare_provider_data tool.
+  
+  agent: drift_detection_agent
+
+risk_assessment_task:
+  description: |
+    Provider being assessed: {provider_name}
+    
+    INPUT:
+    You will receive a list of detected changes from the previous task.
+    
+    STEP 1:
+    Analyze each change and assign risk points according to these rules:
+    - License status → Suspended/Revoked: +30
+    - Hospital affiliation removed/changed: +20
+    - Phone number updated: +15
+    - Address changed: +15
+    - Specialty changed: +10
+    - License expiring soon (within 6 months): +10
+    
+    STEP 2:
+    Sum all risk points, capped at maximum 100.
