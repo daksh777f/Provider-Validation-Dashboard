@@ -38,3 +38,43 @@ def load_historical_data(provider_name: str) -> Optional[Dict[str, Any]]:
     
     if not snapshot_files:
         return None
+    
+    # Use the most recent snapshot (by filename)
+    snapshot_files.sort(reverse=True)
+    latest_snapshot = snapshot_files[0]
+    
+    try:
+        with open(latest_snapshot, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # Find the provider in the snapshot
+        for provider in data.get('providers', []):
+            if provider.get('name', '').lower() == provider_name.lower():
+                return provider
+    except Exception as e:
+        print(f"Error loading historical data: {e}")
+    
+    return None
+
+
+# Helper function to load current provider data
+def load_current_data(provider_name: str) -> Dict[str, Any]:
+    """
+    Load current provider data from all registries.
+    
+    Args:
+        provider_name: Name of the provider to search for
+        
+    Returns:
+        Dict with current data from all sources
+    """
+    current_data = {
+        "license": {},
+        "hospital": {},
+        "npi": {},
+        "maps": {}
+    }
+    
+    # Load from license registry
+    if os.path.exists(LICENSE_PATH):
+        with open(LICENSE_PATH, 'r', encoding='utf-8') as f:

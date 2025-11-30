@@ -136,3 +136,99 @@ def get_session_by_phone(phone: str) -> Optional[dict]:
             sid = s.get("session_id")
             break
     return get_session(sid) if sid else None
+
+
+def update_session(session: VerificationSession) -> None:
+    data = _to_dict(session)
+    if not data:
+        return
+    if redis_client:
+        key = f"verification:session:{data['session_id']}"
+        redis_client.set(key, json.dumps(data, default=str))
+        phone = data.get("phone")
+        if phone:
+            redis_client.set(f"verification:phone:{phone}", data["session_id"])
+        return
+
+    if db_available:
+        db = SessionLocal()
+        try:
+            obj = db.query(VerificationSessionDB).filter_by(session_key=data["session_id"]).one_or_none()
+            if obj is None:
+                obj = VerificationSessionDB(
+                    provider_id=data.get("provider_id"),
+                    session_key=data["session_id"],
+                    data=data,
+                )
+                db.add(obj)
+            else:
+                obj.data = data
+                obj.provider_id = data.get("provider_id")
+            db.commit()
+        except Exception:
+            db.rollback()
+        finally:
+            db.close()
+        return
+
+    _sessions[data["session_id"]] = data
+
+
+def delete_session(session_id: str) -> None:
+    if redis_client:
+        sess = get_session(session_id)
+        if sess and sess.get("phone"):
+            redis_client.delete(f"verification:phone:{sess.get('phone')}")
+        redis_client.delete(f"verification:session:{session_id}")
+        return
+
+    if db_available:
+        db = SessionLocal()
+        try:
+            obj = db.query(VerificationSessionDB).filter_by(session_key=session_id).one_or_none()
+            if obj:
+                db.delete(obj)
+                db.commit()
+        except Exception:
+            db.rollback()
+        finally:
+            db.close()
+        return
+
+    sess = _sessions.get(session_id)
+    if sess and sess.get("phone"):
+        _sessions.pop(session_id, None)
+
+
+def get_all_sessions() -> Dict[str, dict]:
+    if redis_client:
+        keys = redis_client.keys("verification:session:*")
+        out = {}
+        for k in keys:
+            sid = k.split(":")[-1]
+            raw = redis_client.get(k)
+            if raw:
+                out[sid] = json.loads(raw)
+        return out
+
+    if db_available:
+        out = {}
+        db = SessionLocal()
+        try:
+            for obj in db.query(VerificationSessionDB).all():
+                out[obj.session_key] = obj.data
+        finally:
+            db.close()
+        return out
+
+    return _sessions.copy()
+
+
+def get_provider_sessions(provider_id: str) -> list:
+    results = []
+    for sess in get_all_sessions().values():
+        pid = sess.get("provider_id")
+        if pid == provider_id:
+            results.append(sess)
+    return results
+
