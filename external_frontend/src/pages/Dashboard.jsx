@@ -33,3 +33,38 @@ const Dashboard = () => {
                         issues: statsRes.data.failed || 87,
                         autoUpdated: statsRes.data.successful || 42,
                         needsReview: statsRes.data.total_validations - statsRes.data.successful || 145,
+                        avgConfidence: Math.round((statsRes.data.average_confidence || 0.92) * 100)
+                    });
+                }
+                setError(null);
+            } catch (err) {
+                console.error('Error fetching data:', err);
+                // Use mock data as fallback
+                setStats({
+                    total: 1250,
+                    issues: 87,
+                    autoUpdated: 42,
+                    needsReview: 145,
+                    avgConfidence: 92
+                });
+                setApiConnected(false);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        gsap.fromTo('.stat-card',
+            { opacity: 0, y: 20 },
+            { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 }
+        );
+    }, [stats]);
+
+    return (
+        <div className="space-y-8">
+            <div>
+                <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
+                <p className="text-gray-400">Provider validation system overview</p>
