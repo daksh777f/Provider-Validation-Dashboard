@@ -82,3 +82,45 @@ def validate_provider_data(extracted_data: dict) -> dict:
     # License confidence
     license_confidence = 1.0 if license_data and license_data.get("status") == "Active" else 0.5 if license_data else 0.0
     
+    # Location confidence (verify phone and address consistency)
+    location_confidence = 0.0
+    input_phone = ""
+    verified_phone = ""
+    input_address = ""
+    verified_address = ""
+    needs_location_verification = False
+    
+    if npi:
+        input_phone = npi.get("phone", "")
+        input_address = npi.get("address", "")
+    if clinic:
+        verified_phone = clinic.get("phone", "")
+        verified_address = clinic.get("address", "")
+    
+    if input_phone and verified_phone:
+        # Normalize phone for comparison
+        phone_match = input_phone.replace(" ", "") == verified_phone.replace(" ", "")
+        location_confidence += 0.5 if phone_match else 0.25
+    if input_address and verified_address:
+        address_match = input_address.lower() in verified_address.lower() or verified_address.lower() in input_address.lower()
+        location_confidence += 0.5 if address_match else 0.25
+    
+    if location_confidence < 0.5:
+        needs_location_verification = True
+    
+    # Affiliation confidence
+    affiliation_confidence = 0.0
+    hospital_name = ""
+    department = ""
+    if hospital:
+        hospital_name = hospital.get("hospital_name", "")
+        department = hospital.get("department", "")
+        affiliation_confidence = 1.0
+    
+    # Specialty confidence
+    specialty_confidence = 0.0
+    input_specialty = ""
+    verified_specialty = ""
+    if npi:
+        input_specialty = npi.get("specialty", "")
+    if clinic:

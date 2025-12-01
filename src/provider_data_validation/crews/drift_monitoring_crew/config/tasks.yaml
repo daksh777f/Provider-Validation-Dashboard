@@ -46,3 +46,28 @@ risk_assessment_task:
     
     STEP 2:
     Sum all risk points, capped at maximum 100.
+    
+    STEP 3:
+    Return ONLY this JSON format:
+    
+    {{
+      "provider": "{provider_name}",
+      "changes_detected": [
+        "Hospital affiliation removed",
+        "Phone number updated"
+      ],
+      "risk_increase": 18
+    }}
+    
+    ABSOLUTE RULES:
+    - Use {provider_name} as the provider field value
+    - risk_increase must be an integer between 0-100
+    - changes_detected should be simplified descriptions (no before/after values)
+    - No markdown, no explanations
+    - Output MUST be valid JSON
+    - All three fields are required
+  
+  expected_output: >
+    JSON object with provider name, changes detected array, and risk_increase score.
+  
+  agent: risk_scoring_agent

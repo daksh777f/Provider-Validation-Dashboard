@@ -124,3 +124,45 @@ async def get_stats():
         return r.get('validation_status') if isinstance(r, dict) else getattr(r, 'validation_status', None)
 
     def _issues_of(r):
+        return r.get('issues', []) if isinstance(r, dict) else getattr(r, 'issues', [])
+
+    def _confidence_of(r):
+        if isinstance(r, dict):
+            cs = r.get('confidence_scores', {})
+            return cs.get('overall_confidence', 0)
+        else:
+            return getattr(getattr(r, 'confidence_scores', None), 'overall_confidence', 0)
+
+    successful = sum(1 for r in all_results if _status_of(r) in ["VERIFIED", "PARTIALLY_VERIFIED"])
+    failed = sum(1 for r in all_results if _status_of(r) in ["UNVERIFIED", "FLAGGED"])
+
+    issues_count = {}
+    for result in all_results:
+        for issue in _issues_of(result):
+            key = issue.get('issue') if isinstance(issue, dict) else getattr(issue, 'issue', None)
+            if not key:
+                continue
+            issues_count[key] = issues_count.get(key, 0) + 1
+
+    most_common_issues = sorted(issues_count.items(), key=lambda x: x[1], reverse=True)[:5]
+    most_common_issues = [issue for issue, count in most_common_issues]
+
+    avg_conf = sum(_confidence_of(r) for r in all_results) / total if total > 0 else 0
+
+    return ValidationStatsResponse(
+        total_validations=total,
+        successful=successful,
+        failed=failed,
+        success_rate=successful / total if total > 0 else 0,
+        average_confidence=avg_conf,
+        most_common_issues=most_common_issues
+    )
+
+
+# ==================== Single Provider Validation ====================
+
+@app.post("/validate", response_model=SingleValidationResponse)
+async def validate_provider(provider: ProviderInput):
+    """
+    Validate a single provider.
+    
