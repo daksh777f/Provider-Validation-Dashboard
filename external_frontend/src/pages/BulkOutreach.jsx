@@ -36,3 +36,41 @@ const BulkOutreach = () => {
             const results = JSON.parse(storedResults);
 
             // Map validation results to provider format
+            const providersList = results.map(result => ({
+                provider_id: result.provider_id,
+                provider_name: result.provider_name,
+                verified_phone: result.verified_phone,
+                verified_address: result.verified_address,
+                confidence_scores: result.confidence_scores,
+                validation_status: result.validation_status,
+                issues: result.issues || []
+            }));
+
+            setProviders(providersList);
+        } catch (error) {
+            console.error('Error fetching providers:', error);
+            setProviders([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSelectAll = () => {
+        if (selectedProviders.length === filteredProviders.length) {
+            setSelectedProviders([]);
+        } else {
+            setSelectedProviders(filteredProviders.map(p => p.provider_id));
+        }
+    };
+
+    const handleSelectProvider = (providerId) => {
+        setSelectedProviders(prev =>
+            prev.includes(providerId)
+                ? prev.filter(id => id !== providerId)
+                : [...prev, providerId]
+        );
+    };
+
+    const handleBulkSMS = () => {
+        const selectedPhones = filteredProviders
+            .filter(p => selectedProviders.includes(p.provider_id))
