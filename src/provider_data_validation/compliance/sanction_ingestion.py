@@ -33,3 +33,38 @@ async def _ingest_oig() -> int:
             resp.raise_for_status()
             lines = resp.text.strip().split("\n")
             headers = lines[0].lower().split(",")
+            
+            name_idx = headers.index("lastname") if "lastname" in headers else 0
+            first_idx = headers.index("firstname") if "firstname" in headers else 1
+            date_idx = headers.index("excldate") if "excldate" in headers else -1
+            
+            count = 0
+            for line in lines[1:]:
+                parts = line.split(",")
+                if len(parts) < 3:
+                    continue
+                
+                last = parts[name_idx].strip().strip('"')
+                first = parts[first_idx].strip().strip('"') if first_idx < len(parts) else ""
+                full_name = f"{first} {last}".strip()
+                excl_date = parts[date_idx].strip().strip('"') if date_idx >= 0 and date_idx < len(parts) else ""
+                
+                if full_name:
+                    upsert_sanction({
+                        "full_name": full_name,
+                        "source": "OIG-LEIE",
+                        "effective_date": excl_date or "Unknown",
+                        "reason": "Healthcare Exclusion",
+                        "raw": line
+                    })
+                    count += 1
+            
+            return count
+    except Exception as e:
+        print(f"OIG ingestion error: {e}")
+        return 0
+
+
+async def _ingest_sam() -> int:
+    """Download SAM.gov exclusions (requires API key)."""
+    if not SAM_API_KEY:
