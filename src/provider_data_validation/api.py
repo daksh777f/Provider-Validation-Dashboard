@@ -166,3 +166,45 @@ async def validate_provider(provider: ProviderInput):
     """
     Validate a single provider.
     
+    Returns comprehensive validation result with confidence scores.
+    """
+    try:
+        result = ValidationService.validate_provider(provider)
+        return SingleValidationResponse(
+            success=True,
+            data=result,
+            processing_time_ms=result.processing_time_ms
+        )
+    except Exception as e:
+        return SingleValidationResponse(
+            success=False,
+            error=str(e),
+            processing_time_ms=0
+        )
+
+
+@app.post("/validate/batch", response_model=BatchValidationResponse)
+async def validate_batch(
+    request: BatchValidationRequest,
+    background_tasks: BackgroundTasks
+):
+    """
+    Validate multiple providers in batch.
+    
+    Returns batch job ID immediately. Use /batch/{batch_id} to check status.
+    """
+    batch_id = str(uuid.uuid4())
+    
+    # Queue background task
+    background_tasks.add_task(
+        ValidationService.validate_batch,
+        request.providers,
+        batch_id
+    )
+    
+    # Return queued response
+    return BatchValidationResponse(
+        batch_id=batch_id,
+        status="QUEUED",
+        total_providers=len(request.providers)
+    )
