@@ -48,3 +48,53 @@ export const getBatchStatus = (batchId) =>
 /**
  * Upload provider list file (PDF or Excel)
  * @param {File} file - File to upload
+ */
+export const uploadFile = (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return api.post('/upload', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        }
+    });
+};
+
+/**
+ * Validate all providers from uploaded file
+ * @param {string} fileId - File ID from upload
+ * @param {string} priority - Job priority (normal, high, low)
+ */
+export const validateUploadedFile = (fileId, priority = 'normal') =>
+    api.post(`/upload/${fileId}/validate`, null, {
+        params: { priority }
+    });
+
+// ==================== Provider Details ====================
+
+/**
+ * Get validation result for a specific provider
+ * @param {string} providerId - Provider ID
+ */
+export const getProviderResult = (providerId) =>
+    api.get(`/validate/${providerId}`);
+
+/**
+ * Get all providers from a batch
+ * @param {string} batchId - Batch ID
+ */
+export const getBatchProviders = (batchId) =>
+    api.get(`/batch/${batchId}`);
+
+// ==================== Webhook Support ====================
+
+/**
+ * Test webhook connectivity
+ * @param {string} webhookUrl - Webhook URL to test
+ */
+export const testWebhook = (webhookUrl) =>
+    api.post('/webhook/test', null, {
+        params: { webhook_url: webhookUrl }
+    });
+
+// ==================== Provider Verification ====================

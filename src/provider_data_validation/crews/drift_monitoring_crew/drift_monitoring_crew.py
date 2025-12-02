@@ -78,3 +78,43 @@ def load_current_data(provider_name: str) -> Dict[str, Any]:
     # Load from license registry
     if os.path.exists(LICENSE_PATH):
         with open(LICENSE_PATH, 'r', encoding='utf-8') as f:
+            license_data = json.load(f)
+        for record in license_data.get('licenses', []):
+            if record.get('doctor_name', '').lower() == provider_name.lower():
+                current_data['license'] = record
+                break
+    
+    # Load from hospital roster
+    if os.path.exists(HOSPITAL_PATH):
+        with open(HOSPITAL_PATH, 'r', encoding='utf-8') as f:
+            hospital_data = json.load(f)
+        for hospital in hospital_data.get('hospitals', []):
+            for doctor in hospital.get('doctors', []):
+                if doctor.get('name', '').lower() == provider_name.lower():
+                    current_data['hospital'] = {
+                        **doctor,
+                        'hospital_name': hospital.get('hospital_name'),
+                        'location': hospital.get('location')
+                    }
+                    break
+    
+    # Load from NPI registry
+    if os.path.exists(NPI_PATH):
+        with open(NPI_PATH, 'r', encoding='utf-8') as f:
+            npi_data = json.load(f)
+        for record in npi_data.get('providers', []):
+            if record.get('name', '').lower() == provider_name.lower():
+                current_data['npi'] = record
+                break
+    
+    # Load from maps listing
+    if os.path.exists(MAPS_PATH):
+        with open(MAPS_PATH, 'r', encoding='utf-8') as f:
+            maps_data = json.load(f)
+        for record in maps_data.get('clinics', []):
+            for doc in record.get('doctors', []):
+                if doc.get('name', '').lower() == provider_name.lower():
+                    current_data['maps'] = {
+                        **doc,
+                        'clinic_name': record.get('clinic_name'),
+                        'clinic_address': record.get('address')
