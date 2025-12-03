@@ -34,3 +34,39 @@ const DriftMonitoring = () => {
         }
     };
 
+    const getRiskColor = (score) => {
+        if (score >= 50) return 'text-red-500';
+        if (score >= 30) return 'text-yellow-500';
+        return 'text-green-500';
+    };
+
+    const getRiskBgColor = (score) => {
+        if (score >= 50) return 'bg-red-500/10 border-red-500/30';
+        if (score >= 30) return 'bg-yellow-500/10 border-yellow-500/30';
+        return 'bg-green-500/10 border-green-500/30';
+    };
+
+    const getRiskLabel = (score) => {
+        if (score >= 50) return 'HIGH RISK';
+        if (score >= 30) return 'MEDIUM RISK';
+        return 'LOW RISK';
+    };
+
+    return (
+        <div className="max-w-6xl mx-auto space-y-6">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-900/40 to-indigo-900/40 backdrop-blur-md border border-purple-500/20 rounded-2xl p-8">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-purple-500/20 rounded-xl">
+                        <Activity className="w-8 h-8 text-purple-400" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                            Credential Drift Monitoring
+                        </h1>
+                        <p className="text-gray-400 mt-1">
+                            Detect changes in provider credentials over time
+                        </p>
+                    </div>
+                </div>
+            </div>
