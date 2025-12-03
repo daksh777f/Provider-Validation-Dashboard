@@ -84,3 +84,46 @@ const Validation = () => {
                         setValidating(false);
                     }
                 } catch (err) {
+                    console.error('Error polling batch status:', err);
+                }
+            }, 1000);
+
+        } catch (err) {
+            console.error("Validation failed", err);
+            setError(err.response?.data?.error || err.message || 'Failed to start validation');
+            setValidating(false);
+        }
+    };
+
+    const handleCallAll = () => {
+        if (!validationResults || !validationResults.results) return;
+
+        const phoneNumbers = validationResults.results
+            .filter(r => r.verified_phone)
+            .map(r => r.verified_phone);
+
+        alert(`Initiating calls to ${phoneNumbers.length} providers:\n${phoneNumbers.join('\n')}`);
+        // In production, this would integrate with a calling service
+    };
+
+    const handleSMSAll = () => {
+        if (!validationResults || !validationResults.results) return;
+
+        const phoneNumbers = validationResults.results
+            .filter(r => r.verified_phone)
+            .map(r => r.verified_phone);
+
+        alert(`Sending SMS to ${phoneNumbers.length} providers:\n${phoneNumbers.join('\n')}`);
+        // In production, this would integrate with an SMS service
+    };
+
+    const handleReset = () => {
+        setFile(null);
+        setUploadResult(null);
+        setValidationResults(null);
+        setError(null);
+        setBatchId(null);
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
