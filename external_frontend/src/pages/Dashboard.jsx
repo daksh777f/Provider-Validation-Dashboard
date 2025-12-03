@@ -68,3 +68,38 @@ const Dashboard = () => {
             <div>
                 <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
                 <p className="text-gray-400">Provider validation system overview</p>
+                {!apiConnected && <p className="text-sm text-yellow-400 mt-2">Using demo data (backend not connected)</p>}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <StatCard
+                    className="stat-card"
+                    title="Total Providers"
+                    value={stats.total}
+                    icon={Users}
+                    trend={"+2.5%"}
+                />
+                <StatCard
+                    className="stat-card"
+                    title="Issues Found"
+                    value={stats.issues}
+                    icon={AlertTriangle}
+                    trend={"-1.2%"}
+                    isAlert
+                />
+                <StatCard
+                    className="stat-card"
+                    title="Auto Updated"
+                    value={stats.autoUpdated}
+                    icon={CheckCircle}
+                    trend={"+5.3%"}
+                />
+                <StatCard
+                    className="stat-card"
+                    title="Needs Review"
+                    value={stats.needsReview}
+                    icon={Activity}
+                    trend={"+3.1%"}
+                />
+                <StatCard
+                    className="stat-card"
