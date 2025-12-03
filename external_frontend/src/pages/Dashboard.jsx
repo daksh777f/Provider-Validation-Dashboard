@@ -103,3 +103,39 @@ const Dashboard = () => {
                 />
                 <StatCard
                     className="stat-card"
+                    title="Avg Confidence"
+                    value={`${stats.avgConfidence}%`}
+                    icon={CheckCircle}
+                    trend="+2.0%"
+                />
+            </div>
+
+            {/* Provider Geographic Distribution */}
+            <div className="glass-panel p-8 rounded-xl">
+                <h2 className="text-2xl font-bold mb-6">Provider Geographic Distribution</h2>
+                <div className="h-[500px] w-full">
+                    <WorldMap
+                        regionData={{
+                            west: 320,
+                            central: 450,
+                            east: 380,
+                            international: 100
+                        }}
+                    />
+                </div>
+            </div>
+
+            <div className="glass-panel p-8 rounded-xl">
+                <h3 className="text-lg font-semibold mb-4">API Status</h3>
+                <p className="text-sm text-gray-400">
+                    Backend running on: <code className="bg-slate-900 px-2 py-1 rounded">http://localhost:8000</code>
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                    API Documentation: <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">http://localhost:8000/docs</a>
+                </p>
+            </div>
+        </div>
+    );
+};
+
+export default Dashboard;
