@@ -118,3 +118,43 @@ def load_current_data(provider_name: str) -> Dict[str, Any]:
                         **doc,
                         'clinic_name': record.get('clinic_name'),
                         'clinic_address': record.get('address')
+                    }
+                    break
+    
+    return current_data
+
+
+# Tool to load historical data
+class HistoricalDataTool(BaseTool):
+    name: str = "load_historical_provider_data"
+    description: str = "Load historical snapshot data for a provider by name."
+    
+    def _run(self, provider_name: str) -> str:
+        historical = load_historical_data(provider_name)
+        if historical:
+            return json.dumps(historical, indent=2)
+        return json.dumps({"error": "No historical data found", "provider_name": provider_name})
+
+
+# Tool to load current data
+class CurrentDataTool(BaseTool):
+    name: str = "load_current_provider_data"
+    description: str = "Load current provider data from all registries."
+    
+    def _run(self, provider_name: str) -> str:
+        current = load_current_data(provider_name)
+        return json.dumps(current, indent=2)
+
+
+# Tool to compare data and detect changes
+class CompareDataTool(BaseTool):
+    name: str = "compare_provider_data"
+    description: str = "Compare current and historical provider data to detect changes."
+    
+    def _run(self, provider_name: str) -> str:
+        """
+        Compare current vs historical data and return detected changes.
+        """
+        historical = load_historical_data(provider_name)
+        current = load_current_data(provider_name)
+        
