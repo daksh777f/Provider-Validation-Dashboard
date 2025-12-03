@@ -51,3 +51,56 @@ const WorldMap = ({ regionData }) => {
                     Scroll to Zoom • Drag to Pan
                 </div>
             </div>
+
+            <ComposableMap
+                projection="geoMercator"
+                projectionConfig={{ scale: 140 }}
+                style={{ width: "100%", height: "100%" }}
+            >
+                <ZoomableGroup
+                    center={[0, 20]}
+                    zoom={1}
+                    minZoom={0.5}
+                    maxZoom={4}
+                >
+                    <Geographies geography={geoUrl}>
+                        {({ geographies }) =>
+                            geographies.map((geo) => {
+                                const isHovered = hoveredGEO === geo.properties.name;
+                                const countryColor = getCountryColor(geo.properties.name);
+
+                                return (
+                                    <Geography
+                                        key={geo.rsmKey}
+                                        geography={geo}
+                                        onMouseEnter={() => {
+                                            setContent(`${geo.properties.name}`);
+                                            setHoveredGEO(geo.properties.name);
+                                        }}
+                                        onMouseLeave={() => {
+                                            setContent("");
+                                            setHoveredGEO(null);
+                                        }}
+                                        data-tooltip-id="country-tooltip"
+                                        data-tooltip-content={geo.properties.name}
+                                        style={{
+                                            default: {
+                                                fill: "#1e293b",
+                                                stroke: "#334155",
+                                                strokeWidth: 0.5,
+                                                outline: "none",
+                                                transition: "all 0.4s ease-in-out"
+                                            },
+                                            hover: {
+                                                fill: countryColor, // Vibrant color triggers on HOVER
+                                                stroke: "#fff",
+                                                strokeWidth: 1,
+                                                outline: "none",
+                                                cursor: "pointer",
+                                                transition: "all 0.4s ease-in-out"
+                                            },
+                                            pressed: {
+                                                fill: countryColor,
+                                                outline: "none",
+                                                cursor: "grabbing",
+                                            },
