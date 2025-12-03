@@ -39,3 +39,44 @@ const Directory = () => {
                     status: result.validation_status === 'VERIFIED' ? 'Verified' :
                         result.validation_status === 'PARTIALLY_VERIFIED' ? 'Needs Review' :
                             result.validation_status === 'FLAGGED' ? 'Needs Review' :
+                                'Auto-Updated'
+                }));
+            }
+
+            let filtered = allProviders;
+
+            if (search) {
+                filtered = filtered.filter(p =>
+                    p.name.toLowerCase().includes(search.toLowerCase()) ||
+                    p.specialty.toLowerCase().includes(search.toLowerCase())
+                );
+            }
+
+            if (statusFilter) {
+                filtered = filtered.filter(p => p.status === statusFilter);
+            }
+
+            setProviders(filtered);
+
+            // Animate rows in
+            if (tableRef.current && filtered.length > 0) {
+                gsap.fromTo(tableRef.current.children,
+                    { y: 20, opacity: 0 },
+                    { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, ease: 'power2.out', clearProps: 'all' }
+                );
+            }
+        } catch (error) {
+            console.error("Error fetching providers", error);
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Verified': return 'bg-neon-mint/20 text-neon-mint border-neon-mint/30 shadow-none';
+            case 'Needs Review': return 'bg-accent/20 text-accent border-accent/30 shadow-none';
+            case 'Auto-Updated': return 'bg-neon-blue/20 text-neon-blue border-neon-blue/30 shadow-none';
+            default: return 'bg-surface text-slate-400 border-white/10';
+        }
+    };
+
+    const handleOpenModal = () => {
