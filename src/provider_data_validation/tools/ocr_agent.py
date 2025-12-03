@@ -88,3 +88,48 @@ Extract all names now:"""
         return ""
 
 
+def clean_names_with_llm(raw_text: str) -> str:
+    """Use llama3.1 with mock data reference to correct OCR errors."""
+    try:
+        # Load reference names from mock data
+        import json
+        from pathlib import Path
+        import os
+        
+        # Get absolute path to mock data
+        current_file = Path(__file__).resolve()
+        project_root = current_file.parent.parent.parent.parent  # Up 4 levels to project root (from tools -> package -> src -> root)
+        mock_path = project_root / "mock_data" / "npi_registry.json"
+        
+        print(f"  Loading reference from: {mock_path}")
+        reference_names = []
+        
+        if mock_path.exists():
+            try:
+                with open(mock_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    reference_names = [p.get("name", "") for p in data.get("providers", [])]
+                print(f"  [SUCCESS] Loaded {len(reference_names)} reference names")
+            except Exception as e:
+                print(f"  [WARNING] Error loading reference: {e}")
+        else:
+            print(f"  [WARNING] Mock data not found at {mock_path}")
+        
+        ref_list = "\n".join(f"- {name}" for name in reference_names) if reference_names else "(No reference available)"
+        
+        prompt = f"""Match OCR-extracted names to the reference database. Be LENIENT with matching - handwriting OCR is imperfect.
+
+REFERENCE DATABASE (trusted source):
+{ref_list}
+
+OCR EXTRACTED (may have typos, missing letters, extra letters):
+{raw_text}
+
+MATCHING RULES:
+1. Match names even if they have typos or missing/extra letters
+2. Match based on similarity: "Prya Patel" -> "Dr Priya Patel"
+3. Match if first name OR last name is similar: "Rajsh Iyer" -> "Dr Rajesh Iyer"
+4. Ignore "Dr" prefix when matching
+5. Be GENEROUS with matching - prioritize recall over precision
+6. If a name is even 60% similar to a reference name, match it
+7. Output the REFERENCE name (with "Dr"), not the OCR name
