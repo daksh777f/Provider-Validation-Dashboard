@@ -38,3 +38,43 @@ The pipeline feeds everything into a strict **weighted penalty algorithm** to ge
 ## Why This Is Technically Interesting
 
 **Zero-Latency Orchestration:** The **FastAPI** backend never blocks. All data scraping, LLM inference, and SMS webhook waiting happens **asynchronously**.  
+**Local-First AI Integration:** By using **Ollama** and Llama 3.1, I ensure **zero Protected Health Information (PHI)** ever leaves the infrastructure during the validation phase.  
+**Hybrid Inference Pipeline:** LLMs hallucinate. To prevent this, I built a routing layer that forces structured data through **deterministic Regex/Hash checkers**, leaving only the messy, unstructured clinic website HTML for the LLM to parse.  
+**Async State Machine:** The **Twilio SMS** verification flow uses a detached state machine. The server fires the SMS, saves a `PENDING` session, and drops the thread until the webhook wakes it back up.  
+
+---
+
+## Architecture & Workflow
+
+### Architecture
+
+```mermaid
+flowchart TB
+    %% Styling Definitions
+    classDef frontend fill:#20232A,stroke:#61DAFB,stroke-width:2px,color:#fff
+    classDef backend fill:#009688,stroke:#fff,stroke-width:2px,color:#fff
+    classDef aiLayer fill:#FF7B00,stroke:#fff,stroke-width:2px,color:#fff
+    classDef dataSrc fill:#2496ED,stroke:#fff,stroke-width:2px,color:#fff
+    classDef external fill:#F22F46,stroke:#fff,stroke-width:2px,color:#fff
+
+    subgraph User_Interface ["Frontend Layer (React / Vite)"]
+        UI[Dashboard UI]:::frontend
+        Map[Interactive WorldMap]:::frontend
+        Details[Provider Details View]:::frontend
+    end
+
+    subgraph API_Gateway ["Backend Services (FastAPI)"]
+        Router[API Router]:::backend
+        Auth[Auth & Rate Limiting]:::backend
+        Orchestrator[Validation Orchestrator]:::backend
+        Webhooks[Twilio Webhooks]:::backend
+    end
+
+    subgraph AI_Engine ["AI Validation Core (CrewAI + Ollama)"]
+        Agent1[Data Extraction Agent]:::aiLayer
+        Agent2[Discrepancy Analyzer]:::aiLayer
+        Agent3[Confidence Scoring]:::aiLayer
+        LLM[(Local LLM - Llama 3.1)]:::aiLayer
+    end
+
+    subgraph External_Integrations ["Third-Party & Data Sources"]
