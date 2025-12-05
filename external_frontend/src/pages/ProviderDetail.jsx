@@ -78,3 +78,43 @@ const ProviderDetail = () => {
         const interval = setInterval(fetchCallData, 10000);
         return () => clearInterval(interval);
     }, [id, callPollingEnabled]);
+
+    // Save state to sessionStorage when it changes
+    useEffect(() => {
+        if (provider) sessionStorage.setItem(`provider_${id}`, JSON.stringify(provider));
+    }, [provider, id]);
+
+    useEffect(() => {
+        sessionStorage.setItem(`verification_history_${id}`, JSON.stringify(verificationHistory));
+    }, [verificationHistory, id]);
+
+    useEffect(() => {
+        if (currentSession) sessionStorage.setItem(`current_session_${id}`, JSON.stringify(currentSession));
+    }, [currentSession, id]);
+
+    useEffect(() => {
+        sessionStorage.setItem(`conversation_${id}`, JSON.stringify(conversation));
+    }, [conversation, id]);
+
+    useEffect(() => {
+        if (callVerification) sessionStorage.setItem(`call_verification_${id}`, JSON.stringify(callVerification));
+    }, [callVerification, id]);
+
+    const handleStartVerification = async () => {
+        if (!provider.phone || provider.phone === 'N/A') {
+            alert('No phone number available for this provider');
+            return;
+        }
+
+        setVerificationLoading(true);
+        setConversation([]);  // Clear previous conversation
+
+        try {
+            const verificationRequest = {
+                provider_id: provider.id,
+                provider_name: provider.name,
+                phone: provider.phone,
+                specialty: provider.specialty !== 'N/A' ? provider.specialty : undefined,
+                address: provider.address !== 'N/A' ? provider.address : undefined,
+                license_number: provider.licenseInfo?.license_number,
+                hospital: provider.hospitalAffiliation?.hospital_name

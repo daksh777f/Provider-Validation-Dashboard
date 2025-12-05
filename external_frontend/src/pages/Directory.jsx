@@ -80,3 +80,44 @@ const Directory = () => {
     };
 
     const handleOpenModal = () => {
+        setShowModal(true);
+        if (modalRef.current) {
+            gsap.fromTo(modalRef.current,
+                { opacity: 0, scale: 0.9 },
+                { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(1.7)' }
+            );
+        }
+    };
+
+    const handleCloseModal = () => {
+        if (modalRef.current) {
+            gsap.to(modalRef.current, {
+                opacity: 0,
+                scale: 0.9,
+                duration: 0.2,
+                onComplete: () => {
+                    setShowModal(false);
+                    setFormData({ name: '', specialty: '', phone: '', address: '' });
+                }
+            });
+        }
+    };
+
+    const handleInputChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        try {
+            // Add new provider to mock data
+            const newProvider = {
+                id: providers.length + 1,
+                ...formData,
+                confidence: 75,
+                status: 'Needs Review'
+            };
+            setProviders([...providers, newProvider]);
+            handleCloseModal();
