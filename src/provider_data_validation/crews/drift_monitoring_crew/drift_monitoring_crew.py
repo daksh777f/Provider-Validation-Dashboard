@@ -158,3 +158,43 @@ class CompareDataTool(BaseTool):
         historical = load_historical_data(provider_name)
         current = load_current_data(provider_name)
         
+        if not historical:
+            return json.dumps({
+                "changes": [],
+                "note": "No historical data available for comparison"
+            })
+        
+        changes = []
+        
+        # Compare license status
+        hist_license = historical.get('license', {})
+        curr_license = current.get('license', {})
+        
+        if hist_license and curr_license:
+            # Check license status
+            if hist_license.get('status') != curr_license.get('status'):
+                changes.append(
+                    f"License status changed: {hist_license.get('status')} → {curr_license.get('status')}"
+                )
+            
+            # Check specialty
+            if hist_license.get('specialty') != curr_license.get('specialty'):
+                changes.append(
+                    f"Specialty changed: {hist_license.get('specialty')} → {curr_license.get('specialty')}"
+                )
+        
+        # Compare contact information
+        hist_contact = historical.get('contact', {})
+        
+        # Get current phone from any available source
+        curr_phone = (current.get('license', {}).get('phone') or 
+                     current.get('hospital', {}).get('phone') or
+                     current.get('npi', {}).get('phone'))
+        
+        if hist_contact.get('phone') and curr_phone:
+            # Normalize phone numbers for comparison
+            hist_phone = hist_contact.get('phone').replace(' ', '').replace('-', '')
+            curr_phone_norm = curr_phone.replace(' ', '').replace('-', '')
+            if hist_phone != curr_phone_norm:
+                changes.append(
+                    f"Phone number updated: {hist_contact.get('phone')} → {curr_phone}"
