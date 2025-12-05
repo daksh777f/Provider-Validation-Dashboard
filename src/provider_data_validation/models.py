@@ -80,3 +80,44 @@ class ValidationResult(BaseModel):
     sources_checked: List[str] = Field(default_factory=list, description="List of data sources queried")
     sources_matched: List[str] = Field(default_factory=list, description="Sources with matching data")
     
+    # Validation Details
+    validation_status: str = Field(..., description="VERIFIED, PARTIALLY_VERIFIED, UNVERIFIED, FLAGGED")
+    issues: List[ValidationIssue] = Field(default_factory=list)
+    risk_flags: List[RiskFlag] = Field(default_factory=list)
+    
+    # Additional Information
+    requires_manual_review: bool = False
+    requires_contact_verification: bool = False
+    next_steps: List[str] = Field(default_factory=list)
+    
+    # Metadata
+    validation_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    processing_time_ms: float = 0.0
+
+
+class ProviderInput(BaseModel):
+    """Input for validating a single provider."""
+    provider_name: str = Field(..., min_length=1, description="Full name of the provider")
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    specialty: Optional[str] = None
+    license_no: Optional[str] = None
+    npi_number: Optional[str] = None
+    hospital_affiliation: Optional[str] = None
+    date_of_birth: Optional[str] = None
+
+
+class BatchValidationRequest(BaseModel):
+    """Request for batch validation of multiple providers."""
+    providers: List[ProviderInput]
+    priority: str = Field(default="normal", description="normal, high, low")
+    notify_email: Optional[str] = None
+    notify_webhook: Optional[str] = None
+
+
+class FileUploadResponse(BaseModel):
+    """Response after file upload."""
+    file_id: str
+    filename: str
+    file_type: str
+    providers_extracted: int
