@@ -68,3 +68,38 @@ async def _ingest_oig() -> int:
 async def _ingest_sam() -> int:
     """Download SAM.gov exclusions (requires API key)."""
     if not SAM_API_KEY:
+        return 0  # Skip if no API key
+    
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.get(
+                "https://api.sam.gov/entity-information/v3/exclusions",
+                params={"api_key": SAM_API_KEY, "includeSections": "entityInformation"},
+                headers={"Accept": "application/json"}
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            
+            count = 0
+            for entity in data.get("entityData", []):
+                name = entity.get("legalBusinessName") or entity.get("entityName", "Unknown")
+                effective = entity.get("exclusionDetails", {}).get("exclusionDate", "")
+                
+                upsert_sanction({
+                    "full_name": name,
+                    "source": "SAM.gov",
+                    "effective_date": effective,
+                    "reason": "Federal Exclusion",
+                    "raw": str(entity)
+                })
+                count += 1
+            
+            return count
+    except Exception as e:
+        print(f"SAM ingestion error: {e}")
+        return 0
+
+
+if __name__ == "__main__":
+    result = asyncio.run(ingest_sanctions())
+    print(f"Ingestion complete: {result}")
