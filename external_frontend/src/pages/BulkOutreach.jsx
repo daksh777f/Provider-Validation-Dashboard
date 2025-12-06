@@ -74,3 +74,41 @@ const BulkOutreach = () => {
     const handleBulkSMS = () => {
         const selectedPhones = filteredProviders
             .filter(p => selectedProviders.includes(p.provider_id))
+            .map(p => p.verified_phone)
+            .filter(Boolean);
+
+        alert(`Would send SMS to ${selectedPhones.length} providers:\n${selectedPhones.join(', ')}`);
+    };
+
+    const handleBulkCall = () => {
+        const selectedPhones = filteredProviders
+            .filter(p => selectedProviders.includes(p.provider_id))
+            .map(p => p.verified_phone)
+            .filter(Boolean);
+
+        alert(`Would initiate calls to ${selectedPhones.length} providers:\n${selectedPhones.join(', ')}`);
+    };
+
+    const exportToCSV = () => {
+        const selectedData = filteredProviders.filter(p => selectedProviders.includes(p.provider_id));
+        const csv = [
+            ['Name', 'Phone', 'Confidence', 'Status', 'Issues'].join(','),
+            ...selectedData.map(p => [
+                p.provider_name,
+                p.verified_phone || 'N/A',
+                `${(p.confidence_scores?.overall_confidence * 100).toFixed(0)}%`,
+                p.validation_status,
+                p.issues?.length || 0
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `low-confidence-providers-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+    };
+
+    if (loading) {
+        return (
