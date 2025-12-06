@@ -133,3 +133,48 @@ MATCHING RULES:
 5. Be GENEROUS with matching - prioritize recall over precision
 6. If a name is even 60% similar to a reference name, match it
 7. Output the REFERENCE name (with "Dr"), not the OCR name
+8. Skip ONLY obvious headers like "Provider Name" or "List"
+
+OUTPUT FORMAT:
+- One name per line
+- Only reference names (with "Dr" prefix)
+- No parentheses, explanations, or commentary
+- If OCR has "Mera Reddy", output "Dr Meera Reddy"
+- If OCR has "Kavta Desai", output "Dr Kavita Desai"
+
+MATCHED NAMES:
+"""
+
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "llama3.1:latest",
+                "prompt": prompt,
+                "stream": False,
+                "options": {"temperature": 0.1, "num_predict": 500}
+            },
+            timeout=90
+        )
+        
+        if response.status_code == 200:
+            raw_cleaned = response.json().get("response", "")
+            
+            # DEBUG: Print what Llama3.1 returned
+            print(f"\n{'='*60}")
+            print(f"LLAMA3.1 RAW RESPONSE:")
+            print(f"{'='*60}")
+            print(raw_cleaned[:800] if len(raw_cleaned) > 800 else raw_cleaned)
+            print(f"{'='*60}\n")
+            
+            # Post-process: Extract only corrected names (handle arrow format)
+            lines = raw_cleaned.strip().split('\n')
+            cleaned_names = []
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Skip intro/header/commentary lines
+                line_lower = line.lower()
+                skip_phrases = [
