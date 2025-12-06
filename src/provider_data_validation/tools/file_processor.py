@@ -86,3 +86,47 @@ class FileProcessor:
                 print(f"  Page {i+1}/{len(images)}...")
                 text = pytesseract.image_to_string(image, lang='eng')
                 full_text += text + "\n\n"
+            
+            print(f"✓ OCR complete ({len(full_text)} chars)")
+            return full_text
+        except ImportError:
+            raise ImportError(
+                "OCR libraries not installed.\n"
+                "Run: pip install pytesseract pdf2image Pillow\n"
+                "Install Tesseract: https://github.com/UB-Mannheim/tesseract/wiki"
+            )
+        except Exception as e:
+            raise ValueError(f"OCR failed: {str(e)}")
+    
+    @staticmethod
+    def extract_from_pdf(file_content: bytes) -> List[Dict[str, Any]]:
+        """
+        Extract provider data from PDF file.
+        Returns list of provider dictionaries.
+        """
+        if not pypdf:
+            raise ImportError("pypdf is not installed. Install it with: pip install pypdf")
+        
+        providers = []
+        
+        try:
+            pdf_file = io.BytesIO(file_content)
+            reader = pypdf.PdfReader(pdf_file)
+            
+            # Check if PDF is scanned/image-based
+            is_scanned = FileProcessor._is_scanned_pdf(reader)
+            
+            if is_scanned:
+                print("📷 Scanned/handwritten PDF detected. Using OCR...")
+                full_text = FileProcessor._extract_with_ocr(file_content)
+            else:
+                print("📄 Text-based PDF. Using standard extraction...")
+                full_text = ""
+                for page in reader.pages:
+                    full_text += page.extract_text() + "\n"
+            
+            # Parse text to find provider entries
+            print(f"\n{'='*60}")
+            print(f"EXTRACTED PDF TEXT ({len(full_text)} chars):")
+            print(f"{'='*60}")
+            print(full_text[:500] if len(full_text) > 500 else full_text)  # First 500 chars
