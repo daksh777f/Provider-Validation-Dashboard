@@ -133,3 +133,95 @@ MATCHING RULES:
 5. Be GENEROUS with matching - prioritize recall over precision
 6. If a name is even 60% similar to a reference name, match it
 7. Output the REFERENCE name (with "Dr"), not the OCR name
+8. Skip ONLY obvious headers like "Provider Name" or "List"
+
+OUTPUT FORMAT:
+- One name per line
+- Only reference names (with "Dr" prefix)
+- No parentheses, explanations, or commentary
+- If OCR has "Mera Reddy", output "Dr Meera Reddy"
+- If OCR has "Kavta Desai", output "Dr Kavita Desai"
+
+MATCHED NAMES:
+"""
+
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "llama3.1:latest",
+                "prompt": prompt,
+                "stream": False,
+                "options": {"temperature": 0.1, "num_predict": 500}
+            },
+            timeout=90
+        )
+        
+        if response.status_code == 200:
+            raw_cleaned = response.json().get("response", "")
+            
+            # DEBUG: Print what Llama3.1 returned
+            print(f"\n{'='*60}")
+            print(f"LLAMA3.1 RAW RESPONSE:")
+            print(f"{'='*60}")
+            print(raw_cleaned[:800] if len(raw_cleaned) > 800 else raw_cleaned)
+            print(f"{'='*60}\n")
+            
+            # Post-process: Extract only corrected names (handle arrow format)
+            lines = raw_cleaned.strip().split('\n')
+            cleaned_names = []
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Skip intro/header/commentary lines
+                line_lower = line.lower()
+                skip_phrases = [
+                    'here is', 'cleaned', 'list', 'names:', 'corrected',
+                    'match', 'similar', 'closest', 'exact', 'no match',
+                    'reference', 'database', '(', ')'
+                ]
+                if any(skip in line_lower for skip in skip_phrases):
+                    continue
+                    
+                # If format is "OCR -> Corrected", take only the corrected part
+                if '->' in line:
+                    parts = line.split('->')
+                    if len(parts) == 2 and parts[1].strip():
+                        cleaned_names.append(parts[1].strip())
+                elif line and not line.startswith('-') and not line.startswith('*') and not line.startswith('#'):
+                    # Regular name without arrow  
+                    cleaned_names.append(line)
+            
+            # Deduplicate while preserving order
+            seen = set()
+            final_names = []
+            for name in cleaned_names:
+                name_lower = name.lower()
+                if name_lower not in seen:
+                    final_names.append(name)
+                    seen.add(name_lower)
+            
+            final_output = '\n'.join(final_names)
+            print(f"  🧹 Llama3.1 matched {len(final_names)} unique names to reference")
+            return final_output
+        else:
+            print(f"  ⚠️ Llama3.1 unavailable")
+            return raw_text
+    except Exception as e:
+        print(f"  ⚠️ Cleaning failed: {e}")
+        return raw_text
+
+
+def is_ollama_available() -> bool:
+    """Check if Ollama is running and has LLaVA model."""
+    try:
+        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        if response.status_code == 200:
+            models = response.json().get("models", [])
+            has_llava = any("llava" in m.get("name", "").lower() for m in models)
+            return has_llava
+        return False
+    except:
+        return False

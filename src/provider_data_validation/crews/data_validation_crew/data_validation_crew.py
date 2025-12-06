@@ -124,3 +124,129 @@ def validate_provider_data(extracted_data: dict) -> dict:
     if npi:
         input_specialty = npi.get("specialty", "")
     if clinic:
+        verified_specialty = clinic.get("specialty", "")
+    
+    if input_specialty and verified_specialty:
+        specialty_match = input_specialty.lower() == verified_specialty.lower()
+        specialty_confidence = 1.0 if specialty_match else 0.7
+    elif input_specialty or verified_specialty:
+        specialty_confidence = 0.5
+    
+    
+    # ==================================================================
+    # HYBRID VALIDATION SCORING SYSTEM
+    # Combines rule-based deterministic checks with penalty-based scoring
+    # Creates realistic confidence variance (60%-95%) based on actual issues
+    # ==================================================================
+    
+    # Base weights for each dimension
+    WEIGHTS = {
+        'identity_match': 0.25,      # How many sources found
+        'license': 0.20,             # License validity
+        'location': 0.20,            # Phone/address accuracy
+        'specialty': 0.15,           # Specialty verification
+        'affiliation': 0.10,         # Hospital affiliation
+        'consistency': 0.10          # Cross-source data consistency
+    }
+    
+    # Calculate weighted components
+    components = {
+        'identity_match': match_score,
+        'license': license_confidence,
+        'location': location_confidence,
+        'specialty': specialty_confidence,
+        'affiliation': affiliation_confidence,
+        'consistency': max(data_consistency_score, 0.0)
+    }
+    
+    # Weighted average
+    overall_base = sum(components[k] * WEIGHTS[k] for k in WEIGHTS.keys())
+    
+    # Apply penalties for critical issues
+    penalties = 0.0
+    issues = []
+    
+    # Penalty for low source coverage
+    if sources_found < 3:
+        penalty = (3 - sources_found) * 0.05  # -5% per missing source
+        penalties += penalty
+        issues.append(f"Limited data sources ({sources_found}/5)")
+    
+    # Penalty for data inconsistencies
+    if discrepancies:
+        penalty = len(discrepancies) * 0.08  # -8% per discrepancy
+        penalties += penalty
+        for disc in discrepancies:
+            issues.append(disc)
+    
+    # Penalty for inactive/missing license
+    if not license_data or license_data.get("status") != "Active":
+        penalties += 0.10
+        issues.append("License not active or not found")
+    
+    # Penalty for location verification needed
+    if needs_location_verification:
+        penalties += 0.07
+        issues.append("Location verification required")
+    
+    # Final confidence with penalties applied
+    overall_validation_confidence = max(overall_base - penalties, 0.35)  # Floor at 35%
+    
+
+    
+    # Round to percentage (e.g., 0.89 = 89%)
+    overall_validation_confidence = round(overall_validation_confidence, 2)
+    
+    
+    # Determine if contact verification is needed
+    requires_contact_verification = sources_found < 3 or location_confidence < 0.7
+    
+    # Merge additional issues with those from hybrid scoring
+    if not license_data:
+        issues.append("No license data found")
+    elif license_data.get("status") != "Active":
+        issues.append(f"License status is {license_data.get('status')}")
+    if not hospital:
+        issues.append("No hospital affiliation found")
+    if location_confidence < 0.7:
+        issues.append("Location/phone verification needed")
+    if specialty_confidence < 0.8:
+        issues.append("Specialty mismatch detected")
+    
+    
+    return {
+        "identity": {
+            "match_score": round(match_score, 2),
+            "matched_sources": matched_sources
+        },
+        "license": {
+            "license_no": license_data.get("license_no", ""),
+            "status": license_data.get("status", ""),
+            "valid_till": license_data.get("valid_till", ""),
+            "confidence": round(license_confidence, 2)
+        },
+        "location": {
+            "input_phone": input_phone,
+            "verified_phone": verified_phone,
+            "input_address": input_address,
+            "verified_address": verified_address,
+            "confidence": round(min(location_confidence, 1.0), 2),
+            "needs_verification": needs_location_verification
+        },
+        "affiliation": {
+            "hospital": hospital_name,
+            "department": department,
+            "confidence": round(affiliation_confidence, 2)
+        },
+        "specialty": {
+            "input_specialty": input_specialty,
+            "verified_specialty": verified_specialty,
+            "confidence": round(specialty_confidence, 2)
+        },
+        "issues": issues,
+        "overall_validation_confidence": round(overall_validation_confidence, 2),
+        "requires_contact_verification": requires_contact_verification
+    }
+
+
+def _clean_name_for_matching(name: str) -> str:

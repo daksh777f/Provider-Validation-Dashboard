@@ -198,3 +198,43 @@ class CompareDataTool(BaseTool):
             if hist_phone != curr_phone_norm:
                 changes.append(
                     f"Phone number updated: {hist_contact.get('phone')} → {curr_phone}"
+                )
+        
+        # Compare address
+        hist_address = hist_contact.get('address')
+        curr_location = current.get('hospital', {}).get('location')
+        
+        if hist_address and curr_location:
+            if hist_address.lower() != curr_location.lower():
+                changes.append(
+                    f"Address changed: {hist_address} → {curr_location}"
+                )
+        
+        # Compare hospital affiliation
+        hist_affiliation = historical.get('affiliation', {})
+        curr_hospital = current.get('hospital', {})
+        
+        hist_hospital_name = hist_affiliation.get('hospital')
+        curr_hospital_name = curr_hospital.get('hospital_name')
+        
+        if hist_hospital_name:
+            if not curr_hospital_name:
+                changes.append(f"Hospital affiliation removed: {hist_hospital_name}")
+            elif hist_hospital_name != curr_hospital_name:
+                changes.append(
+                    f"Hospital affiliation changed: {hist_hospital_name} → {curr_hospital_name}"
+                )
+        
+        return json.dumps({"changes": changes}, indent=2)
+
+
+# -------------------------
+# DRIFT MONITORING CREW
+# -------------------------
+
+@CrewBase
+class DriftMonitoringCrew:
+    """Provider Credential Drift Monitoring Crew"""
+    
+    agents_config = 'config/agents.yaml'
+    tasks_config = 'config/tasks.yaml'

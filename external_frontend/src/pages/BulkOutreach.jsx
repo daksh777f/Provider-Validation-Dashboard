@@ -74,3 +74,79 @@ const BulkOutreach = () => {
     const handleBulkSMS = () => {
         const selectedPhones = filteredProviders
             .filter(p => selectedProviders.includes(p.provider_id))
+            .map(p => p.verified_phone)
+            .filter(Boolean);
+
+        alert(`Would send SMS to ${selectedPhones.length} providers:\n${selectedPhones.join(', ')}`);
+    };
+
+    const handleBulkCall = () => {
+        const selectedPhones = filteredProviders
+            .filter(p => selectedProviders.includes(p.provider_id))
+            .map(p => p.verified_phone)
+            .filter(Boolean);
+
+        alert(`Would initiate calls to ${selectedPhones.length} providers:\n${selectedPhones.join(', ')}`);
+    };
+
+    const exportToCSV = () => {
+        const selectedData = filteredProviders.filter(p => selectedProviders.includes(p.provider_id));
+        const csv = [
+            ['Name', 'Phone', 'Confidence', 'Status', 'Issues'].join(','),
+            ...selectedData.map(p => [
+                p.provider_name,
+                p.verified_phone || 'N/A',
+                `${(p.confidence_scores?.overall_confidence * 100).toFixed(0)}%`,
+                p.validation_status,
+                p.issues?.length || 0
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `low-confidence-providers-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+    };
+
+    if (loading) {
+        return (
+            <div className="p-8">
+                <div className="text-center text-slate-400">Loading providers...</div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6 animate-fade-in">
+            {/* Header */}
+            <div>
+                <h1 className="text-3xl font-poster text-white mb-2">Bulk Outreach</h1>
+                <p className="text-slate-400">Contact providers with low confidence scores</p>
+            </div>
+
+            {/* Controls */}
+            <div className="glass-panel p-6 rounded-2xl space-y-6">
+                {/* Threshold Slider */}
+                <div>
+                    <label className="flex items-center gap-2 text-white mb-3">
+                        <Filter size={18} className="text-primary" />
+                        <span className="font-semibold">Confidence Threshold: &lt; {confidenceThreshold}%</span>
+                    </label>
+                    <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={confidenceThreshold}
+                        onChange={(e) => setConfidenceThreshold(Number(e.target.value))}
+                        className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-3">
+                    <button
+                        onClick={handleSelectAll}
+                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all"
+                    >
