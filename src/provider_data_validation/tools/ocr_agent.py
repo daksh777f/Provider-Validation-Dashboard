@@ -178,3 +178,50 @@ MATCHED NAMES:
                 # Skip intro/header/commentary lines
                 line_lower = line.lower()
                 skip_phrases = [
+                    'here is', 'cleaned', 'list', 'names:', 'corrected',
+                    'match', 'similar', 'closest', 'exact', 'no match',
+                    'reference', 'database', '(', ')'
+                ]
+                if any(skip in line_lower for skip in skip_phrases):
+                    continue
+                    
+                # If format is "OCR -> Corrected", take only the corrected part
+                if '->' in line:
+                    parts = line.split('->')
+                    if len(parts) == 2 and parts[1].strip():
+                        cleaned_names.append(parts[1].strip())
+                elif line and not line.startswith('-') and not line.startswith('*') and not line.startswith('#'):
+                    # Regular name without arrow  
+                    cleaned_names.append(line)
+            
+            # Deduplicate while preserving order
+            seen = set()
+            final_names = []
+            for name in cleaned_names:
+                name_lower = name.lower()
+                if name_lower not in seen:
+                    final_names.append(name)
+                    seen.add(name_lower)
+            
+            final_output = '\n'.join(final_names)
+            print(f"  🧹 Llama3.1 matched {len(final_names)} unique names to reference")
+            return final_output
+        else:
+            print(f"  ⚠️ Llama3.1 unavailable")
+            return raw_text
+    except Exception as e:
+        print(f"  ⚠️ Cleaning failed: {e}")
+        return raw_text
+
+
+def is_ollama_available() -> bool:
+    """Check if Ollama is running and has LLaVA model."""
+    try:
+        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        if response.status_code == 200:
+            models = response.json().get("models", [])
+            has_llava = any("llava" in m.get("name", "").lower() for m in models)
+            return has_llava
+        return False
+    except:
+        return False
