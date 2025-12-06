@@ -208,3 +208,45 @@ def validate_provider_data(extracted_data: dict) -> dict:
         issues.append(f"License status is {license_data.get('status')}")
     if not hospital:
         issues.append("No hospital affiliation found")
+    if location_confidence < 0.7:
+        issues.append("Location/phone verification needed")
+    if specialty_confidence < 0.8:
+        issues.append("Specialty mismatch detected")
+    
+    
+    return {
+        "identity": {
+            "match_score": round(match_score, 2),
+            "matched_sources": matched_sources
+        },
+        "license": {
+            "license_no": license_data.get("license_no", ""),
+            "status": license_data.get("status", ""),
+            "valid_till": license_data.get("valid_till", ""),
+            "confidence": round(license_confidence, 2)
+        },
+        "location": {
+            "input_phone": input_phone,
+            "verified_phone": verified_phone,
+            "input_address": input_address,
+            "verified_address": verified_address,
+            "confidence": round(min(location_confidence, 1.0), 2),
+            "needs_verification": needs_location_verification
+        },
+        "affiliation": {
+            "hospital": hospital_name,
+            "department": department,
+            "confidence": round(affiliation_confidence, 2)
+        },
+        "specialty": {
+            "input_specialty": input_specialty,
+            "verified_specialty": verified_specialty,
+            "confidence": round(specialty_confidence, 2)
+        },
+        "issues": issues,
+        "overall_validation_confidence": round(overall_validation_confidence, 2),
+        "requires_contact_verification": requires_contact_verification
+    }
+
+
+def _clean_name_for_matching(name: str) -> str:
