@@ -166,3 +166,45 @@ def validate_provider_data(extracted_data: dict) -> dict:
     penalties = 0.0
     issues = []
     
+    # Penalty for low source coverage
+    if sources_found < 3:
+        penalty = (3 - sources_found) * 0.05  # -5% per missing source
+        penalties += penalty
+        issues.append(f"Limited data sources ({sources_found}/5)")
+    
+    # Penalty for data inconsistencies
+    if discrepancies:
+        penalty = len(discrepancies) * 0.08  # -8% per discrepancy
+        penalties += penalty
+        for disc in discrepancies:
+            issues.append(disc)
+    
+    # Penalty for inactive/missing license
+    if not license_data or license_data.get("status") != "Active":
+        penalties += 0.10
+        issues.append("License not active or not found")
+    
+    # Penalty for location verification needed
+    if needs_location_verification:
+        penalties += 0.07
+        issues.append("Location verification required")
+    
+    # Final confidence with penalties applied
+    overall_validation_confidence = max(overall_base - penalties, 0.35)  # Floor at 35%
+    
+
+    
+    # Round to percentage (e.g., 0.89 = 89%)
+    overall_validation_confidence = round(overall_validation_confidence, 2)
+    
+    
+    # Determine if contact verification is needed
+    requires_contact_verification = sources_found < 3 or location_confidence < 0.7
+    
+    # Merge additional issues with those from hybrid scoring
+    if not license_data:
+        issues.append("No license data found")
+    elif license_data.get("status") != "Active":
+        issues.append(f"License status is {license_data.get('status')}")
+    if not hospital:
+        issues.append("No hospital affiliation found")
