@@ -130,3 +130,47 @@ class FileProcessor:
             print(f"EXTRACTED PDF TEXT ({len(full_text)} chars):")
             print(f"{'='*60}")
             print(full_text[:500] if len(full_text) > 500 else full_text)  # First 500 chars
+            print(f"{'='*60}\n")
+            
+            providers = FileProcessor._parse_text_for_providers(full_text)
+            print(f"Found {len(providers)} providers")
+            
+        except Exception as e:
+            print(f"Error extracting from PDF: {e}")
+            raise ValueError(f"Failed to process PDF: {str(e)}")
+        
+        return providers
+    
+    @staticmethod
+    def extract_from_excel(file_content: bytes) -> List[Dict[str, Any]]:
+        """
+        Extract provider data from Excel file.
+        Supports .xlsx files.
+        Returns list of provider dictionaries.
+        """
+        if not openpyxl:
+            raise ImportError("openpyxl is not installed. Install it with: pip install openpyxl")
+        
+        providers = []
+        
+        try:
+            excel_file = io.BytesIO(file_content)
+            workbook = openpyxl.load_workbook(excel_file)
+            
+            # Process each sheet
+            for sheet_name in workbook.sheetnames:
+                sheet = workbook[sheet_name]
+                
+                # Find header row (first row with data)
+                header_row = None
+                header_indices = {}
+                
+                for row_idx, row in enumerate(sheet.iter_rows(values_only=True), 1):
+                    if row and any(row):  # Skip empty rows
+                        # Try to match headers
+                        matched_headers = 0
+                        for col_idx, cell_value in enumerate(row):
+                            if cell_value:
+                                cell_str = str(cell_value).lower().strip()
+                                for header in FileProcessor.COMMON_HEADERS:
+                                    if header in cell_str:
