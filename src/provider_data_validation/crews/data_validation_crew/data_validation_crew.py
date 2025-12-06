@@ -124,3 +124,45 @@ def validate_provider_data(extracted_data: dict) -> dict:
     if npi:
         input_specialty = npi.get("specialty", "")
     if clinic:
+        verified_specialty = clinic.get("specialty", "")
+    
+    if input_specialty and verified_specialty:
+        specialty_match = input_specialty.lower() == verified_specialty.lower()
+        specialty_confidence = 1.0 if specialty_match else 0.7
+    elif input_specialty or verified_specialty:
+        specialty_confidence = 0.5
+    
+    
+    # ==================================================================
+    # HYBRID VALIDATION SCORING SYSTEM
+    # Combines rule-based deterministic checks with penalty-based scoring
+    # Creates realistic confidence variance (60%-95%) based on actual issues
+    # ==================================================================
+    
+    # Base weights for each dimension
+    WEIGHTS = {
+        'identity_match': 0.25,      # How many sources found
+        'license': 0.20,             # License validity
+        'location': 0.20,            # Phone/address accuracy
+        'specialty': 0.15,           # Specialty verification
+        'affiliation': 0.10,         # Hospital affiliation
+        'consistency': 0.10          # Cross-source data consistency
+    }
+    
+    # Calculate weighted components
+    components = {
+        'identity_match': match_score,
+        'license': license_confidence,
+        'location': location_confidence,
+        'specialty': specialty_confidence,
+        'affiliation': affiliation_confidence,
+        'consistency': max(data_consistency_score, 0.0)
+    }
+    
+    # Weighted average
+    overall_base = sum(components[k] * WEIGHTS[k] for k in WEIGHTS.keys())
+    
+    # Apply penalties for critical issues
+    penalties = 0.0
+    issues = []
+    
