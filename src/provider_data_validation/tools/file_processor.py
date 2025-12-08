@@ -174,3 +174,47 @@ class FileProcessor:
                                 cell_str = str(cell_value).lower().strip()
                                 for header in FileProcessor.COMMON_HEADERS:
                                     if header in cell_str:
+                                        header_indices[header] = col_idx
+                                        matched_headers += 1
+                        
+                        if matched_headers >= 2:  # Found headers
+                            header_row = row_idx
+                            break
+                
+                # Extract data rows
+                if header_row:
+                    for row_idx, row in enumerate(sheet.iter_rows(values_only=True), 1):
+                        if row_idx <= header_row:
+                            continue
+                        
+                        # Skip empty rows
+                        if not row or not any(row):
+                            continue
+                        
+                        provider_dict = {}
+                        
+                        # Extract provider info based on header positions
+                        for header, col_idx in header_indices.items():
+                            if col_idx < len(row):
+                                cell_value = row[col_idx]
+                                if cell_value:
+                                    provider_dict[header] = str(cell_value).strip()
+                        
+                        # Standardize field names
+                        provider = FileProcessor._standardize_provider_dict(provider_dict)
+                        
+                        # Only add if we have a provider name
+                        if provider.get("provider_name"):
+                            providers.append(provider)
+                else:
+                    # No headers found - assume first column is provider names
+                    print("No headers found. Treating first column as provider names.")
+                    for row_idx, row in enumerate(sheet.iter_rows(values_only=True), 1):
+                        # Skip empty rows
+                        if not row or not any(row):
+                            continue
+                        
+                        # Get first non-empty cell in row
+                        provider_name = None
+                        for cell_value in row:
+                            if cell_value:
