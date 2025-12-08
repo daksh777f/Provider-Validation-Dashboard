@@ -121,3 +121,44 @@ const Directory = () => {
             };
             setProviders([...providers, newProvider]);
             handleCloseModal();
+        } catch (error) {
+            console.error('Error creating provider:', error);
+            alert('Failed to create provider. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h1 className="text-5xl font-poster text-white">Provider Directory</h1>
+                <div className="flex gap-4 items-center">
+                    <button
+                        onClick={handleOpenModal}
+                        className="px-5 py-3 bg-gradient-to-r from-primary to-neon-blue text-white rounded-xl font-semibold text-base flex items-center gap-2 hover:shadow-lg hover:shadow-primary/50 transition-all hover:scale-105 active:scale-95"
+                    >
+                        <Plus size={20} /> Add Provider
+                    </button>
+                    <div className="relative group">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search providers..."
+                            className="bg-surface/50 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-base focus:outline-none focus:border-primary/50 focus:bg-surface transition-all w-64"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+                    <div className="relative">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <select
+                            className="bg-surface/50 border border-white/10 rounded-xl pl-10 pr-8 py-3 text-base focus:outline-none focus:border-primary/50 appearance-none cursor-pointer"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <option value="">All Statuses</option>
+                            <option value="Verified">Verified</option>
+                            <option value="Needs Review">Needs Review</option>
+                            <option value="Auto-Updated">Auto-Updated</option>
+                        </select>
