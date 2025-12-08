@@ -36,3 +36,81 @@ def calculate_cri(provider_data: Dict[str, Any], validation_result: Optional[Dic
     missing = []
     if not provider_data.get("npi"):
         missing.append("NPI")
+    if not provider_data.get("license"):
+        missing.append("License")
+    if not provider_data.get("board_certified"):
+        missing.append("Board Certification")
+    
+    if missing:
+        cri += len(missing) * 10
+        factors.append(f"Missing: {', '.join(missing)}")
+    
+    # Data age
+    updated_at = provider_data.get("updated_at") or provider_data.get("created_at")
+    if updated_at:
+        try:
+            last_update = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+            age_days = (datetime.utcnow() - last_update.replace(tzinfo=None)).days
+            if age_days > 90:
+                cri += 5
+                factors.append(f"Stale data: {age_days} days old")
+        except:
+            pass
+    
+    cri = min(cri, 100)  # Cap at 100
+    
+    # Determine risk level
+    if cri == 0:
+        level = "NONE"
+        color = "green"
+    elif cri < 30:
+        level = "LOW"
+        color = "green"
+    elif cri < 60:
+        level = "MEDIUM"
+        color = "yellow"
+    elif cri < 80:
+        level = "HIGH"
+        color = "orange"
+    else:
+        level = "CRITICAL"
+        color = "red"
+    
+    result = {
+        "provider_id": provider_data.get("id", "unknown"),
+        "cri_score": cri,
+        "risk_level": level,
+        "risk_color": color,
+        "factors": factors,
+        "sanction_matches": sanction_result["matches"],
+        "calculated_at": datetime.utcnow().isoformat()
+    }
+    
+    # Store result
+    upsert_status(result)
+    
+    return result
+
+
+def get_provider_compliance(provider_id: str) -> Optional[Dict[str, Any]]:
+    """Retrieve stored compliance status for a provider."""
+    return get_status(provider_id)
+
+
+def recalculate_all_compliance(providers: list) -> Dict[str, Any]:
+    """Batch recalculate compliance for all providers."""
+    results = []
+    for provider in providers:
+        cri = calculate_cri(provider)
+        results.append(cri)
+    
+    return {
+        "recalculated": len(results),
+        "summary": {
+            "critical": sum(1 for r in results if r["risk_level"] == "CRITICAL"),
+            "high": sum(1 for r in results if r["risk_level"] == "HIGH"),
+            "medium": sum(1 for r in results if r["risk_level"] == "MEDIUM"),
+            "low": sum(1 for r in results if r["risk_level"] == "LOW"),
+            "none": sum(1 for r in results if r["risk_level"] == "NONE")
+        }
+    }

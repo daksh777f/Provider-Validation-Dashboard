@@ -124,3 +124,87 @@ export default function CompliancePanel({ providerId, providerData }) {
     // Show initial calculation prompt if not calculated
     if (compliance.risk_level === 'UNKNOWN' || !compliance.calculated_at) {
         return (
+            <div className="bg-gray-900 rounded-lg shadow-lg p-6">
+                <div className="flex items-center justify-between border-b border-gray-700 pb-4 mb-4">
+                    <div className="flex items-center">
+                        <Shield className="w-6 h-6 mr-2 text-blue-400" />
+                        <h2 className="text-2xl font-bold text-white">Compliance Intelligence</h2>
+                    </div>
+                </div>
+
+                <div className="bg-gray-800 rounded-lg p-8 text-center">
+                    <Shield className="w-16 h-16 mx-auto mb-4 text-gray-500" />
+                    <h3 className="text-lg font-semibold text-gray-200 mb-2">
+                        Compliance Status Not Calculated
+                    </h3>
+                    <p className="text-gray-400 mb-6">
+                        Run compliance analysis to check this provider against sanction registries and calculate their Compliance Risk Index (CRI).
+                    </p>
+                    <button
+                        onClick={recalculate}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow-lg"
+                    >
+                        Calculate Compliance Status
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-gray-900 rounded-lg shadow-lg p-6 space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-700 pb-4">
+                <div className="flex items-center">
+                    <Shield className="w-6 h-6 mr-2 text-blue-400" />
+                    <h2 className="text-2xl font-bold text-white">Compliance Intelligence</h2>
+                </div>
+                <button
+                    onClick={recalculate}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-lg font-semibold"
+                >
+                    Recalculate
+                </button>
+            </div>
+
+            {/* CRI Score */}
+            <div className={`border-2 rounded-lg p-6 shadow-lg ${getRiskColor(compliance.risk_color)}`}>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="text-sm font-semibold uppercase tracking-wide mb-2 opacity-90">
+                            COMPLIANCE RISK INDEX
+                        </div>
+                        <div className="text-6xl font-bold mb-2">
+                            {compliance.cri_score}
+                        </div>
+                        <div className="text-xl font-bold uppercase tracking-wide">
+                            {compliance.risk_level} RISK
+                        </div>
+                    </div>
+                    <div className="text-right opacity-80">
+                        <TrendingUp className="w-16 h-16" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Risk Factors */}
+            {compliance.factors && compliance.factors.length > 0 && (
+                <div className="bg-orange-900/20 border border-orange-800/50 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center text-orange-400">
+                        <AlertTriangle className="w-5 h-5 mr-2" />
+                        Risk Factors
+                    </h3>
+                    <ul className="space-y-2">
+                        {compliance.factors.map((factor, idx) => (
+                            <li key={idx} className="flex items-start">
+                                <span className="text-orange-400 mr-2">•</span>
+                                <span className="text-gray-300">{factor}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {/* Sanction Matches */}
+            {compliance.sanction_matches && compliance.sanction_matches.length > 0 && (
+                <div className="bg-red-900/20 border-2 border-red-800/50 rounded-lg p-4">

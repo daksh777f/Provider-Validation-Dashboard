@@ -238,3 +238,46 @@ class DriftMonitoringCrew:
     
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
+    
+    ollama_llm = LLM(
+        model="ollama/llama3.1:latest",
+        base_url="http://localhost:11434",
+        api_key="not-needed",
+    )
+    
+    @agent
+    def drift_detection_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['drift_detection_agent'],
+            tools=[HistoricalDataTool(), CurrentDataTool(), CompareDataTool()],
+            llm=self.ollama_llm,
+        )
+    
+    @agent
+    def risk_scoring_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['risk_scoring_agent'],
+            llm=self.ollama_llm,
+        )
+    
+    @task
+    def drift_detection_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['drift_detection_task'],
+        )
+    
+    @task
+    def risk_assessment_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['risk_assessment_task'],
+        )
+    
+    @crew
+    def crew(self) -> Crew:
+        """Creates the Drift Monitoring Crew"""
+        return Crew(
+            agents=self.agents,  # Auto-loaded by @agent decorators
+            tasks=self.tasks,    # Auto-loaded by @task decorators
+            process=Process.sequential,
+            verbose=True,
+        )
