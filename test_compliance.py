@@ -52,3 +52,57 @@ async def test_compliance_module():
             "id": "test-001",
             "full_name": "Dr. John Smith",
             "first_name": "John",
+            "last_name": "Smith",
+            "npi": "1234567890",
+            "license": "MD12345",
+            "board_certified": True,
+            "updated_at": "2024-01-01T00:00:00"
+        }
+        
+        check_result = check_provider(test_provider)
+        print(f"✓ Provider check completed")
+        print(f"  - Has sanctions: {check_result['has_sanction']}")
+        print(f"  - Matches found: {len(check_result['matches'])}")
+    except Exception as e:
+        print(f"✗ Provider check failed: {e}")
+    
+    # Test 5: CRI Calculation
+    print("\n[5/5] Testing CRI Calculation...")
+    try:
+        cri_result = calculate_cri(test_provider)
+        print(f"✓ CRI calculated successfully")
+        print(f"  - CRI Score: {cri_result['cri_score']}")
+        print(f"  - Risk Level: {cri_result['risk_level']}")
+        print(f"  - Risk Color: {cri_result['risk_color']}")
+        print(f"  - Factors: {len(cri_result['factors'])}")
+        for factor in cri_result['factors']:
+            print(f"    • {factor}")
+    except Exception as e:
+        print(f"✗ CRI calculation failed: {e}")
+    
+    # Summary
+    print("\n" + "=" * 60)
+    print("Test Suite Complete")
+    print("=" * 60)
+    
+    # Check stored compliance statuses
+    print("\n[Bonus] Checking Stored Compliance Data...")
+    try:
+        statuses = load_statuses()
+        print(f"✓ Found {len(statuses)} stored compliance records")
+        
+        if len(statuses) > 0:
+            print("\nRisk Distribution:")
+            risk_counts = {}
+            for status in statuses:
+                level = status.get('risk_level', 'UNKNOWN')
+                risk_counts[level] = risk_counts.get(level, 0) + 1
+            
+            for level, count in sorted(risk_counts.items()):
+                print(f"  - {level}: {count}")
+    except Exception as e:
+        print(f"✗ Could not load statuses: {e}")
+
+
+if __name__ == "__main__":
+    asyncio.run(test_compliance_module())
