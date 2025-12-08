@@ -166,3 +166,45 @@ export default function CompliancePanel({ providerId, providerData }) {
                     Recalculate
                 </button>
             </div>
+
+            {/* CRI Score */}
+            <div className={`border-2 rounded-lg p-6 shadow-lg ${getRiskColor(compliance.risk_color)}`}>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="text-sm font-semibold uppercase tracking-wide mb-2 opacity-90">
+                            COMPLIANCE RISK INDEX
+                        </div>
+                        <div className="text-6xl font-bold mb-2">
+                            {compliance.cri_score}
+                        </div>
+                        <div className="text-xl font-bold uppercase tracking-wide">
+                            {compliance.risk_level} RISK
+                        </div>
+                    </div>
+                    <div className="text-right opacity-80">
+                        <TrendingUp className="w-16 h-16" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Risk Factors */}
+            {compliance.factors && compliance.factors.length > 0 && (
+                <div className="bg-orange-900/20 border border-orange-800/50 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center text-orange-400">
+                        <AlertTriangle className="w-5 h-5 mr-2" />
+                        Risk Factors
+                    </h3>
+                    <ul className="space-y-2">
+                        {compliance.factors.map((factor, idx) => (
+                            <li key={idx} className="flex items-start">
+                                <span className="text-orange-400 mr-2">•</span>
+                                <span className="text-gray-300">{factor}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {/* Sanction Matches */}
+            {compliance.sanction_matches && compliance.sanction_matches.length > 0 && (
+                <div className="bg-red-900/20 border-2 border-red-800/50 rounded-lg p-4">
