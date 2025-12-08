@@ -124,3 +124,45 @@ export default function CompliancePanel({ providerId, providerData }) {
     // Show initial calculation prompt if not calculated
     if (compliance.risk_level === 'UNKNOWN' || !compliance.calculated_at) {
         return (
+            <div className="bg-gray-900 rounded-lg shadow-lg p-6">
+                <div className="flex items-center justify-between border-b border-gray-700 pb-4 mb-4">
+                    <div className="flex items-center">
+                        <Shield className="w-6 h-6 mr-2 text-blue-400" />
+                        <h2 className="text-2xl font-bold text-white">Compliance Intelligence</h2>
+                    </div>
+                </div>
+
+                <div className="bg-gray-800 rounded-lg p-8 text-center">
+                    <Shield className="w-16 h-16 mx-auto mb-4 text-gray-500" />
+                    <h3 className="text-lg font-semibold text-gray-200 mb-2">
+                        Compliance Status Not Calculated
+                    </h3>
+                    <p className="text-gray-400 mb-6">
+                        Run compliance analysis to check this provider against sanction registries and calculate their Compliance Risk Index (CRI).
+                    </p>
+                    <button
+                        onClick={recalculate}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow-lg"
+                    >
+                        Calculate Compliance Status
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-gray-900 rounded-lg shadow-lg p-6 space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-700 pb-4">
+                <div className="flex items-center">
+                    <Shield className="w-6 h-6 mr-2 text-blue-400" />
+                    <h2 className="text-2xl font-bold text-white">Compliance Intelligence</h2>
+                </div>
+                <button
+                    onClick={recalculate}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-lg font-semibold"
+                >
+                    Recalculate
+                </button>
+            </div>
