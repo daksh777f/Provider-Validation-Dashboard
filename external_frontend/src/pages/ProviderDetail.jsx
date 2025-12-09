@@ -118,3 +118,43 @@ const ProviderDetail = () => {
                 address: provider.address !== 'N/A' ? provider.address : undefined,
                 license_number: provider.licenseInfo?.license_number,
                 hospital: provider.hospitalAffiliation?.hospital_name
+            };
+
+            const response = await startVerification(verificationRequest);
+
+            if (response.data.success) {
+                setCurrentSession(response.data);
+
+                // Start conversation simulation
+                simulateSmartConversation();
+            } else {
+                alert('Failed to send verification: ' + response.data.message);
+            }
+        } catch (error) {
+            console.error('Verification error:', error);
+            alert('Error sending verification SMS');
+        } finally {
+            setVerificationLoading(false);
+        }
+    };
+
+    // Simulate intelligent conversation based on validation issues
+    const simulateSmartConversation = () => {
+        // ONLY ask about MUTABLE fields (address, hospital) 
+        // SKIP: phone (delivery proves it), specialty (doesn't change)
+        const issues = [];
+
+        // Address - practices relocate
+        if (provider.address) {
+            issues.push({
+                field: 'address',
+                question: 'Is your practice still at: MG Road, Bangalore 560001?',
+                correction: '456 New Medical Plaza, MG Road, Bangalore 560001'
+            });
+        }
+
+        // Hospital affiliation - doctors switch hospitals
+        if (provider.hospitalAffiliation) {
+            issues.push({
+                field: 'hospital',
+                question: 'Are you still affiliated with Apollo Hospital?',
