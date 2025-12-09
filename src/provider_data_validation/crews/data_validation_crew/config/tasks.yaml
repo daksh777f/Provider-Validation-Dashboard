@@ -35,3 +35,41 @@ data_validation_task:
       "npi": {},
       "license": {},
       "hospital": {},
+      "maps": {},
+      "clinic": {}
+    }
+
+    You MUST compute:
+
+    - identity.match_score
+    - license.confidence
+    - location.confidence
+    - affiliation.confidence
+    - specialty.confidence
+    - overall_validation_confidence
+    - requires_contact_verification
+
+    You MUST return ONLY this JSON:
+
+    {
+      "identity": {"match_score": 0.00, "matched_sources": []},
+      "license": {"license_no": "", "status": "", "valid_till": "", "confidence": 0.00},
+      "location": {"input_phone": "", "verified_phone": "", "input_address": "", "verified_address": "", "confidence": 0.00, "needs_verification": false},
+      "affiliation": {"hospital": "", "department": "", "confidence": 0.00},
+      "specialty": {"input_specialty": "", "verified_specialty": "", "confidence": 0.00},
+      "issues": [],
+      "overall_validation_confidence": 0.00,
+      "requires_contact_verification": false
+    }
+
+    ABSOLUTE RULES:
+    - No hallucinations
+    - No markdown
+    - No explanations
+    - No extra keys
+    - No missing keys
+
+  expected_output: >
+    RAW JSON ONLY.
+
+  agent: data_validation_agent
