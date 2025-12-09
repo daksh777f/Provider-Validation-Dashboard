@@ -162,3 +162,44 @@ const Directory = () => {
                             <option value="Needs Review">Needs Review</option>
                             <option value="Auto-Updated">Auto-Updated</option>
                         </select>
+                    </div>
+                </div>
+            </div>
+
+            <div className="glass-panel rounded-2xl overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="border-b border-white/10 text-slate-400 text-sm uppercase tracking-wider">
+                            <th className="p-4 font-medium">Provider</th>
+                            <th className="p-4 font-medium">Specialty</th>
+                            <th className="p-4 font-medium">Contact Info</th>
+                            <th className="p-4 font-medium">Confidence</th>
+                            <th className="p-4 font-medium">Status</th>
+                            <th className="p-4 font-medium"></th>
+                        </tr>
+                    </thead>
+                    <tbody ref={tableRef} className="text-base">
+                        {providers.map((provider) => (
+                            <tr
+                                key={provider.id}
+                                onClick={() => navigate(`/provider/${provider.id}`)}
+                                className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group"
+                            >
+                                <td className="p-4">
+                                    <div className="flex items-center gap-3">
+                                        <img src="/provider-icon.png" alt="" className="w-10 h-10 rounded-full border border-white/10 bg-white/5 p-1" />
+                                        <div>
+                                            <div className="font-medium text-white text-lg">{provider.name}</div>
+                                            <div className="text-sm text-slate-500">ID: {String(provider.id).padStart(8, '0')}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-4 text-slate-300 text-base">{provider.specialty}</td>
+                                <td className="p-4">
+                                    <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
+                                        <Phone size={14} /> {provider.phone}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-slate-400 text-sm">
+                                        <MapPin size={14} /> {provider.address}
+                                    </div>
+                                </td>
