@@ -203,3 +203,44 @@ const Directory = () => {
                                         <MapPin size={14} /> {provider.address}
                                     </div>
                                 </td>
+                                <td className="p-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-16 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full ${provider.confidence > 80 ? 'bg-green-500' : provider.confidence > 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                                style={{ width: `${provider.confidence}%` }}
+                                            />
+                                        </div>
+                                        <span className="text-sm font-medium">{provider.confidence}%</span>
+                                    </div>
+                                </td>
+                                <td className="p-4">
+                                    <span className={`px-3 py-1.5 rounded-full text-sm font-medium border ${getStatusColor(provider.status)}`}>
+                                        {provider.status}
+                                    </span>
+                                </td>
+                                <td className="p-4 text-right">
+                                    <ChevronRight className="text-slate-600 group-hover:text-white group-hover:translate-x-1 transition-all" size={18} />
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                {providers.length === 0 && (
+                    <div className="p-8 text-center text-slate-500">No providers found matching your criteria.</div>
+                )}
+            </div>
+
+            {/* Add Provider Modal */}
+            {showModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={handleCloseModal}>
+                    <div
+                        ref={modalRef}
+                        className="glass-panel p-8 rounded-3xl w-full max-w-lg mx-4 border-2 border-white/20 shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-3xl font-poster text-white">Add New Provider</h2>
+                            <button
+                                onClick={handleCloseModal}
+                                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
