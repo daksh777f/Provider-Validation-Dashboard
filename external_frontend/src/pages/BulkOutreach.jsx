@@ -150,3 +150,41 @@ const BulkOutreach = () => {
                         onClick={handleSelectAll}
                         className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all"
                     >
+                        {selectedProviders.length === filteredProviders.length ? 'Deselect All' : 'Select All'}
+                    </button>
+
+                    <button
+                        onClick={handleBulkSMS}
+                        className="px-4 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-xl transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={selectedProviders.length === 0}
+                    >
+                        <Mail size={18} />
+                        Send SMS ({selectedProviders.length})
+                    </button>
+
+                    <button
+                        onClick={handleBulkCall}
+                        className="px-4 py-2 bg-secondary/10 hover:bg-secondary/20 border border-secondary/30 text-secondary rounded-xl transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={selectedProviders.length === 0}
+                    >
+                        <Phone size={18} />
+                        Initiate Calls ({selectedProviders.length})
+                    </button>
+
+                    <button
+                        onClick={exportToCSV}
+                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={selectedProviders.length === 0}
+                    >
+                        <Download size={18} />
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+
+            {/* Providers List */}
+            <div className="glass-panel rounded-2xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-4">
+                    {filteredProviders.length} provider{filteredProviders.length !== 1 ? 's' : ''} below {confidenceThreshold}%
+                </h3>
+

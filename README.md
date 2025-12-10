@@ -78,3 +78,43 @@ flowchart TB
     end
 
     subgraph External_Integrations ["Third-Party & Data Sources"]
+        NPI[(NPI Registry)]:::dataSrc
+        License[(State License Board)]:::dataSrc
+        Hospital[(Hospital Rosters)]:::dataSrc
+        Twilio[Twilio SMS API]:::external
+    end
+
+    %% Flow connections
+    UI <-->|REST API| Router
+    Map --> Router
+    Details --> Router
+    
+    Router --> Auth
+    Auth --> Orchestrator
+    Orchestrator --> Agent1
+    Orchestrator --> Agent2
+    Orchestrator --> Agent3
+    
+    Agent1 <--> LLM
+    Agent2 <--> LLM
+    Agent3 <--> LLM
+    
+    Agent1 -->|Scrapes/API| NPI
+    Agent1 -->|Scrapes/API| License
+    Agent1 -->|Scrapes/API| Hospital
+    
+    Webhooks <--> Twilio
+    Orchestrator -->|Trigger SMS Verification| Twilio
+```
+
+### Workflow
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#0d1117", "primaryColor": "#161b22", "primaryTextColor": "#e6edf3", "primaryBorderColor": "#8b949e", "lineColor": "#58a6ff", "actorBkg": "#161b22", "actorTextColor": "#e6edf3", "signalColor": "#e6edf3", "signalTextColor": "#e6edf3", "noteBkgColor": "#1f6feb", "noteTextColor": "#ffffff", "noteBorderColor": "#58a6ff"}}}%%
+sequenceDiagram
+    autonumber
+    
+    actor Admin as Healthcare Admin
+    participant UI as React Dashboard
+    participant API as FastAPI Backend
+    participant Orchestrator as CrewAI Orchestrator
