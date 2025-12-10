@@ -158,3 +158,43 @@ const ProviderDetail = () => {
             issues.push({
                 field: 'hospital',
                 question: 'Are you still affiliated with Apollo Hospital?',
+                correction: 'Fortis Hospital, Bangalore'
+            });
+        }
+
+        // Initial SMS
+        setTimeout(() => {
+            setConversation([{
+                sender: 'system',
+                message: `Hi ${provider.name}, we're verifying your provider information.`,
+                time: new Date()
+            }]);
+
+            // Ask about first issue
+            setTimeout(() => {
+                if (issues.length > 0) {
+                    setConversation(prev => [...prev, {
+                        sender: 'system',
+                        message: issues[0].question,
+                        time: new Date()
+                    }]);
+
+                    // Provider responds NO
+                    setTimeout(() => {
+                        setConversation(prev => [...prev, {
+                            sender: 'provider',
+                            message: 'NO, that needs updating',
+                            time: new Date()
+                        }]);
+
+                        setCurrentSession(prev => ({
+                            ...prev,
+                            status: 'CORRECTIONS_NEEDED',
+                            provider_response: 'NO'
+                        }));
+
+                        // Request correction
+                        setTimeout(() => {
+                            setConversation(prev => [...prev, {
+                                sender: 'system',
+                                message: 'Please reply with the correct information.',
