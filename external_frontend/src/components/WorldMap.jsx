@@ -104,3 +104,57 @@ const WorldMap = ({ regionData }) => {
                                                 outline: "none",
                                                 cursor: "grabbing",
                                             },
+                                        }}
+                                    />
+                                );
+                            })
+                        }
+                    </Geographies>
+
+                    {markers.map(({ name, coordinates, count, color }) => (
+                        <Marker key={name} coordinates={coordinates}>
+                            <g
+                                data-tooltip-id="my-tooltip"
+                                data-tooltip-content={`${name}: ${count} Providers`}
+                                className="cursor-pointer hover:scale-110 transition-transform"
+                            >
+                                {/* Pulsing Effect */}
+                                <circle r={10} fill={color} opacity="0.4">
+                                    <animate attributeName="r" from="4" to="12" dur="1.5s" repeatCount="indefinite" />
+                                    <animate attributeName="opacity" from="0.7" to="0" dur="1.5s" repeatCount="indefinite" />
+                                </circle>
+
+                                {/* Core Dot */}
+                                <circle r={4} fill={color} stroke="#fff" strokeWidth={1} />
+                            </g>
+                        </Marker>
+                    ))}
+                </ZoomableGroup>
+            </ComposableMap>
+
+            {/* Tooltip for Markers */}
+            <Tooltip id="my-tooltip" style={{ backgroundColor: "#0f172a", color: "#fff", border: "1px solid #334155", borderRadius: "8px", zIndex: 50 }} />
+
+            {/* Tooltip for Countries */}
+            <Tooltip id="country-tooltip" style={{ backgroundColor: "rgba(15, 23, 42, 0.9)", color: "#94a3b8", fontSize: "12px", borderRadius: "4px", padding: "4px 8px" }} />
+
+            {/* Dynamic Name Display on Hover */}
+            {(content) && (
+                <div className="absolute bottom-4 left-4 z-10">
+                    <div className="bg-slate-900/80 backdrop-blur px-4 py-2 rounded-lg border border-white/10 shadow-xl flex items-center gap-3">
+                        <div
+                            className="w-3 h-3 rounded-full animate-pulse transition-colors duration-300"
+                            style={{ backgroundColor: getCountryColor(content) }}
+                        ></div>
+                        <div>
+                            <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Territory</p>
+                            <p className="text-white font-bold text-lg leading-none">{content}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default WorldMap;
