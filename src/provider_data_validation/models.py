@@ -121,3 +121,44 @@ class FileUploadResponse(BaseModel):
     filename: str
     file_type: str
     providers_extracted: int
+    extraction_status: str
+    extracted_providers: List[ProviderInput]
+    upload_timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class BatchValidationResponse(BaseModel):
+    """Response for batch validation request."""
+    batch_id: str
+    status: str = Field(..., description="QUEUED, PROCESSING, COMPLETED, FAILED")
+    total_providers: int
+    completed: int = 0
+    failed: int = 0
+    results: List[ValidationResult] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    processing_time_ms: float = 0.0
+
+
+class SingleValidationResponse(BaseModel):
+    """Response for single provider validation."""
+    success: bool
+    data: Optional[ValidationResult] = None
+    error: Optional[str] = None
+    processing_time_ms: float = 0.0
+
+
+class HealthCheckResponse(BaseModel):
+    """Health check response."""
+    status: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    components: Dict[str, str] = Field(default_factory=dict)
+    system_info: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ValidationStatsResponse(BaseModel):
+    """Validation statistics response."""
+    total_validations: int
+    successful: int
+    failed: int
+    success_rate: float

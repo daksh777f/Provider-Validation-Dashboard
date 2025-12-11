@@ -198,3 +198,43 @@ const ProviderDetail = () => {
                             setConversation(prev => [...prev, {
                                 sender: 'system',
                                 message: 'Please reply with the correct information.',
+                                time: new Date()
+                            }]);
+
+                            // Provider provides correction
+                            setTimeout(() => {
+                                const corrections = {};
+                                issues.forEach(issue => {
+                                    corrections[issue.field] = issue.correction;
+                                });
+
+                                setConversation(prev => [...prev, {
+                                    sender: 'provider',
+                                    message: Object.entries(corrections).map(([k, v]) => `${k}: ${v}`).join('\n'),
+                                    time: new Date()
+                                }]);
+
+                                setCurrentSession(prev => ({
+                                    ...prev,
+                                    status: 'COMPLETED',
+                                    corrections,
+                                    completed_at: new Date().toISOString()
+                                }));
+                            }, 3000);
+                        }, 2000);
+                    }, 2000);
+                }
+            }, 1500);
+        }, 500);
+    };
+
+    const pollVerificationStatus = (sessionId) => {
+        const interval = setInterval(async () => {
+            try {
+                const response = await getVerificationStatus(sessionId);
+                const session = response.data;
+
+                setCurrentSession(session);
+
+                // Stop polling if completed
+                if (['CONFIRMED', 'COMPLETED', 'FAILED', 'TIMEOUT'].includes(session.status)) {

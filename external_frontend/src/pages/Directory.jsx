@@ -244,3 +244,44 @@ const Directory = () => {
                             <button
                                 onClick={handleCloseModal}
                                 className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                                <X size={24} className="text-slate-400" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Provider Name</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full bg-surface/50 border border-white/10 rounded-xl px-4 py-3 text-base text-white focus:outline-none focus:border-primary/50 transition-all"
+                                    placeholder="Dr. John Smith"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Specialty</label>
+                                <select
+                                    name="specialty"
+                                    value={formData.specialty}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full bg-surface/50 border border-white/10 rounded-xl px-4 py-3 text-base text-white focus:outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="">Select a specialty</option>
+                                    {specialties.map((spec) => (
+                                        <option key={spec} value={spec}>{spec}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={formData.phone}

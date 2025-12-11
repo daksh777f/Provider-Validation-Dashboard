@@ -127,3 +127,46 @@ const Validation = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
+            case 'VERIFIED': return 'text-green-400 bg-green-500/20 border-green-500/30';
+            case 'PARTIALLY_VERIFIED': return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30';
+            case 'UNVERIFIED': return 'text-red-400 bg-red-500/20 border-red-500/30';
+            case 'FLAGGED': return 'text-orange-400 bg-orange-500/20 border-orange-500/30';
+            default: return 'text-slate-400 bg-slate-500/20 border-slate-500/30';
+        }
+    };
+
+    return (
+        <div className="max-w-6xl mx-auto space-y-8">
+            <div className="text-center space-y-4">
+                <h1 className="text-5xl font-poster text-white">Batch Provider Validation</h1>
+                <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+                    Upload a PDF or Excel file with provider names. Our AI will validate them against multiple data sources and provide confidence scores.
+                </p>
+            </div>
+
+            {/* Upload Section */}
+            {!uploadResult && !validationResults && (
+                <div className="glass-panel p-8 rounded-2xl border border-white/10">
+                    <h2 className="text-2xl font-bold text-white mb-6">Upload Provider List</h2>
+
+                    <div className="space-y-6">
+                        <div className="border-2 border-dashed border-white/20 rounded-xl p-12 text-center hover:border-primary/50 transition-colors">
+                            <Upload className="w-16 h-16 mx-auto mb-4 text-slate-400" />
+                            <p className="text-lg text-white mb-2">Drop your file here or click to browse</p>
+                            <p className="text-sm text-slate-400 mb-4">Supports PDF and Excel (.xlsx) files</p>
+                            <input
+                                type="file"
+                                accept=".pdf,.xlsx,.xls"
+                                onChange={handleFileSelect}
+                                className="hidden"
+                                id="file-upload"
+                            />
+                            <label
+                                htmlFor="file-upload"
+                                className="inline-block px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl cursor-pointer transition-colors text-white font-medium"
+                            >
+                                Select File
+                            </label>
+                        </div>
+
+                        {file && (

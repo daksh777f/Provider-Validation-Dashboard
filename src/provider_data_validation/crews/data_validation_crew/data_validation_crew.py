@@ -250,3 +250,45 @@ def validate_provider_data(extracted_data: dict) -> dict:
 
 
 def _clean_name_for_matching(name: str) -> str:
+    """Remove titles and normalize name for better fuzzy matching."""
+    import re
+    # Remove common titles
+    name = re.sub(r'\b(dr\.?|doctor|md|phd|do)\b', '', name, flags=re.IGNORECASE)
+    # Remove extra whitespace and periods
+    name = re.sub(r'\.', '', name)
+    name = ' '.join(name.split())
+    return name.strip().lower()
+
+
+def _fuzzy_match_name(input_name: str, candidates: list[dict], name_field: str = "name", threshold: float = 0.7) -> dict | None:
+    """
+    Find best matching provider from candidates using fuzzy matching.
+    
+    Args:
+        input_name: Name to search for
+        candidates: List of provider dicts
+        name_field: Field name containing the provider name
+        threshold: Minimum similarity ratio (0.0-1.0)
+    
+    Returns:
+        Best matching provider dict if similarity >= threshold, else None
+    """
+    from difflib import SequenceMatcher
+    
+    cleaned_input = _clean_name_for_matching(input_name)
+    best_match = None
+    best_ratio = 0.0
+    
+    for candidate in candidates:
+        candidate_name = candidate.get(name_field, "")
+        if not candidate_name:
+            continue
+            
+        cleaned_candidate = _clean_name_for_matching(candidate_name)
+        
+        # Calculate similarity ratio
+        ratio = SequenceMatcher(None, cleaned_input, cleaned_candidate).ratio()
+        
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_match = candidate

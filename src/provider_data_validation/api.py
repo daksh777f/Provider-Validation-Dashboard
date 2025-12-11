@@ -208,3 +208,45 @@ async def validate_batch(
         status="QUEUED",
         total_providers=len(request.providers)
     )
+
+
+@app.get("/batch/{batch_id}", response_model=BatchValidationResponse)
+async def get_batch_status(batch_id: str):
+    """Get status of a batch validation job."""
+    batch = ValidationService.get_batch_status(batch_id)
+    
+    if not batch:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+    
+    return batch
+
+
+# ==================== File Upload ====================
+
+@app.post("/upload", response_model=FileUploadResponse)
+async def upload_file(file: UploadFile = File(...)):
+    """
+    Upload a provider list file (PDF or Excel).
+    
+    Extracts provider information and returns list of providers found.
+    """
+    try:
+        # Validate file
+        file_content = await file.read()
+        file_type = FileProcessor.get_file_type(file.filename)
+        
+        if file_type == 'unknown':
+            raise HTTPException(status_code=400, detail="Unsupported file type. Use PDF or XLSX")
+        
+        if not FileProcessor.validate_file(file_content, file_type):
+            raise HTTPException(status_code=400, detail="Invalid or corrupted file")
+        
+        # Extract providers
+        if file_type == 'pdf':
+            extracted_providers = FileProcessor.extract_from_pdf(file_content)
+        else:  # xlsx
+            extracted_providers = FileProcessor.extract_from_excel(file_content)
+        
+        # Convert to ProviderInput objects
+        providers = []
+        for provider_dict in extracted_providers:
