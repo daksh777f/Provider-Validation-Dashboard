@@ -118,3 +118,43 @@ sequenceDiagram
     participant UI as React Dashboard
     participant API as FastAPI Backend
     participant Orchestrator as CrewAI Orchestrator
+    participant Sources as Registries & Databases
+    participant Twilio as Twilio Webhook Service
+    actor Doc as Provider Mobile
+    
+    note over Admin,Doc: Phase 1: Data Submission
+    Admin->>UI: Submit Provider Payload
+    activate UI
+    UI->>API: POST /validate
+    activate API
+    API->>Orchestrator: Trigger Multi-Agent Pipeline
+    activate Orchestrator
+    
+    note over Admin,Doc: Phase 2: Parallel Data Extraction
+    Orchestrator->>Sources: Async Queries (NPI, License, Hospital)
+    activate Sources
+    Sources-->>Orchestrator: Return Structured & Unstructured Data
+    deactivate Sources
+    
+    note over Admin,Doc: Phase 3: AI Discrepancy Analysis
+    Orchestrator->>Orchestrator: Fuzzy Match Addresses & Names
+    Orchestrator->>Orchestrator: Apply Weighted Penalty Matrix
+    Orchestrator-->>API: Yield Final Confidence Score (e.g. 74%)
+    deactivate Orchestrator
+    
+    alt Confidence Score < 90% (Requires Action)
+        note over Admin,Doc: Phase 4: Interactive Resolution
+        API->>Twilio: Initiate SMS Verification Session
+        activate Twilio
+        Twilio->>Doc: SMS: "Verify Mercy Health affiliation..."
+        activate Doc
+        Doc-->>Twilio: SMS Reply: "YES" (or Correction)
+        deactivate Doc
+        Twilio-->>API: Webhook Callback with Updated State
+        deactivate Twilio
+        API->>API: Adjust Score based on Provider Input
+    end
+    
+    note over Admin,Doc: Phase 5: Finalization
+    API-->>UI: Return Validated Provider Object
+    deactivate API
