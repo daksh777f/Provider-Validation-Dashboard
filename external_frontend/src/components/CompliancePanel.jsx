@@ -208,3 +208,45 @@ export default function CompliancePanel({ providerId, providerData }) {
             {/* Sanction Matches */}
             {compliance.sanction_matches && compliance.sanction_matches.length > 0 && (
                 <div className="bg-red-900/20 border-2 border-red-800/50 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center text-red-400">
+                        <XCircle className="w-5 h-5 mr-2" />
+                        Sanction Matches ({compliance.sanction_matches.length})
+                    </h3>
+                    <div className="space-y-3">
+                        {compliance.sanction_matches.map((match, idx) => (
+                            <div key={idx} className="bg-gray-800 rounded p-3 border border-red-700/50">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="font-semibold text-white">{match.matched_name}</span>
+                                    <span className="text-sm px-2 py-1 bg-red-600 text-white rounded">
+                                        {match.similarity_score}% match
+                                    </span>
+                                </div>
+                                <div className="text-sm text-gray-400">
+                                    <div><strong className="text-gray-300">Source:</strong> {match.source}</div>
+                                    <div><strong className="text-gray-300">Effective:</strong> {match.effective_date}</div>
+                                    <div><strong className="text-gray-300">Reason:</strong> {match.reason}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* No Issues */}
+            {(!compliance.sanction_matches || compliance.sanction_matches.length === 0) &&
+                compliance.cri_score === 0 && (
+                    <div className="bg-green-900/20 border-2 border-green-700/50 rounded-lg p-4 flex items-center">
+                        <CheckCircle className="w-6 h-6 mr-3 text-green-400" />
+                        <span className="text-green-300 font-semibold">
+                            No compliance issues detected
+                        </span>
+                    </div>
+                )}
+
+            {/* Timestamp */}
+            <div className="text-sm text-gray-400 text-right pt-2 border-t border-gray-800">
+                Last calculated: {new Date(compliance.calculated_at).toLocaleString()}
+            </div>
+        </div>
+    );
+}
