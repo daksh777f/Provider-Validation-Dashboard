@@ -162,3 +162,44 @@ class ValidationStatsResponse(BaseModel):
     successful: int
     failed: int
     success_rate: float
+    average_confidence: float
+    most_common_issues: List[str]
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ErrorResponse(BaseModel):
+    """Standard error response."""
+    error: str
+    code: str
+    details: Optional[Dict[str, Any]] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+# ==================== Verification Models ====================
+
+class VerificationStatus(str, Enum):
+    """Verification session status."""
+    PENDING_RESPONSE = "PENDING_RESPONSE"  # Waiting for provider to respond
+    CONFIRMED = "CONFIRMED"  # Provider confirmed details are correct
+    CORRECTIONS_NEEDED = "CORRECTIONS_NEEDED"  # Provider said NO, awaiting corrections
+    COMPLETED = "COMPLETED"  # Corrections received and processed
+    TIMEOUT = "TIMEOUT"  # Provider didn't respond within time limit
+    FAILED = "FAILED"  # SMS sending or other error
+
+
+class VerificationSession(BaseModel):
+    """Represents an ongoing verification conversation with a provider."""
+    session_id: str = Field(..., description="Unique session identifier")
+    provider_id: str = Field(..., description="Provider being verified")
+    provider_name: str
+    phone: str = Field(..., description="Phone number where verification SMS was sent")
+    
+    status: VerificationStatus = VerificationStatus.PENDING_RESPONSE
+    
+    # Original provider data sent for verification
+    original_data: Dict[str, Any] = Field(default_factory=dict)
+    
+    # Provider responses
+    initial_response: Optional[str] = None  # YES/NO
+    correction_text: Optional[str] = None  # Free-form corrections if NO
+    
