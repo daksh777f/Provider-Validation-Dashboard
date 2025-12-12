@@ -238,3 +238,43 @@ source venv/bin/activate
 pip install -r requirements.txt
 uvicorn src.provider_data_validation.api:app --reload --port 8000
 ```
+**Windows:**
+```cmd
+scripts\install.bat
+scripts\start_system.bat
+```
+
+### 3. Start the Frontend
+**Mac / Linux / Windows:**
+```bash
+cd external_frontend
+npm install
+npm run dev
+```
+Access the dashboard at `http://localhost:5173`.
+
+---
+
+## API Reference
+
+### Core Endpoints
+- `POST /validate` - Trigger a validation pipeline for a single provider
+- `POST /batch/validate` - Trigger batch validation
+- `POST /verify/webhook` - Twilio callback handler
+- `GET /stats` - Fetch system health and verification statistics
+
+### Example: `/validate`
+
+**Request:**
+```bash
+curl -X POST http://localhost:8000/validate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "npi": "1234567890",
+    "first_name": "John",
+    "last_name": "Doe",
+    "specialty": "Cardiology",
+    "state": "CA",
+    "phone": "+12345678900"
+  }'
+```
