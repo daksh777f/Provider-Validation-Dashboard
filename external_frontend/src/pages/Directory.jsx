@@ -285,3 +285,48 @@ const Directory = () => {
                                     type="tel"
                                     name="phone"
                                     value={formData.phone}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full bg-surface/50 border border-white/10 rounded-xl px-4 py-3 text-base text-white focus:outline-none focus:border-primary/50 transition-all"
+                                    placeholder="555-123-4567"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Address</label>
+                                <input
+                                    type="text"
+                                    name="address"
+                                    value={formData.address}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full bg-surface/50 border border-white/10 rounded-xl px-4 py-3 text-base text-white focus:outline-none focus:border-primary/50 transition-all"
+                                    placeholder="123 Main Street, City, State"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={handleCloseModal}
+                                    className="flex-1 px-5 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-base font-medium text-white transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="flex-1 px-5 py-3 bg-gradient-to-r from-primary to-neon-blue text-white rounded-xl font-semibold text-base hover:shadow-lg hover:shadow-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSubmitting ? 'Adding...' : 'Add Provider'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default Directory;

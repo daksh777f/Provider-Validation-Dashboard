@@ -106,3 +106,39 @@ const DriftMonitoring = () => {
                 )}
             </div>
 
+            {/* Results */}
+            {result && (
+                <div className="space-y-6">
+                    {/* Risk Score Card */}
+                    <div className={`backdrop-blur-md border rounded-2xl p-8 ${getRiskBgColor(result.risk_increase)}`}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-6">
+                                <div className="p-4 bg-white/10 rounded-2xl">
+                                    <Shield className={`w-12 h-12 ${getRiskColor(result.risk_increase)}`} />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-gray-400 mb-1">Provider: {result.provider}</div>
+                                    <div className={`text-5xl font-bold ${getRiskColor(result.risk_increase)} mb-2`}>
+                                        {result.risk_increase}%
+                                    </div>
+                                    <div className={`text-sm font-semibold ${getRiskColor(result.risk_increase)}`}>
+                                        {getRiskLabel(result.risk_increase)}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-400">
+                                <Clock className="w-5 h-5" />
+                                <span>Compared to historical data</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Changes Detected */}
+                    <div className="bg-gray-900/60 backdrop-blur-md border border-gray-700/50 rounded-2xl p-6">
+                        <div className="flex items-center gap-3 mb-6">
+                            <TrendingUp className="w-6 h-6 text-purple-400" />
+                            <h2 className="text-2xl font-bold">Changes Detected</h2>
+                            <span className="px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-full text-sm text-purple-300">
+                                {result.changes_detected?.length || 0} changes
+                            </span>
+                        </div>

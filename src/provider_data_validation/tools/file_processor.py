@@ -218,3 +218,47 @@ class FileProcessor:
                         provider_name = None
                         for cell_value in row:
                             if cell_value:
+                                provider_name = str(cell_value).strip()
+                                break
+                        
+                        if provider_name:
+                            providers.append({"provider_name": provider_name})
+            
+        except Exception as e:
+            print(f"Error extracting from Excel: {e}")
+            raise ValueError(f"Failed to process Excel file: {str(e)}")
+        
+        return providers
+    
+    @staticmethod
+    def _parse_text_for_providers(text: str) -> List[Dict[str, Any]]:
+        """
+        Parse text content to find provider entries.
+        This is a basic implementation - enhance based on your text structure.
+        """
+        providers = []
+        
+        # Split by lines and look for patterns
+        lines = text.split('\n')
+        
+        current_provider = {}
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Clean list markers (-, *, •, 1., etc.) before processing
+            import re
+            line = re.sub(r'^[-*•]\s*', '', line)  # Remove bullet points
+            line = re.sub(r'^\d+\.?\s*', '', line)  # Remove numbers
+            line = line.strip()
+            
+            if not line:
+                continue
+            
+            # Check for common patterns
+            line_lower = line.lower()
+            
+            # Look for name patterns (Dr., MD, etc.)
+            if any(prefix in line for prefix in ['dr.', 'dr ', 'prof.', 'prof ']):
