@@ -213,3 +213,46 @@ const Validation = () => {
                 <div className="glass-panel p-8 rounded-2xl border border-white/10 space-y-6">
                     <div className="flex items-center justify-between">
                         <div>
+                            <h2 className="text-2xl font-bold text-white">Providers Extracted</h2>
+                            <p className="text-slate-400 mt-1">Found {uploadResult.providers_extracted} providers in {uploadResult.filename}</p>
+                        </div>
+                        <button
+                            onClick={handleReset}
+                            className="px-4 py-2 border border-white/20 rounded-lg hover:bg-white/5 transition-colors text-white"
+                        >
+                            Upload Different File
+                        </button>
+                    </div>
+
+                    {/* Provider List Preview */}
+                    <div className="max-h-64 overflow-y-auto space-y-2">
+                        {uploadResult.extracted_providers && uploadResult.extracted_providers.slice(0, 10).map((provider, idx) => (
+                            <div key={idx} className="p-3 bg-white/5 rounded-lg border border-white/10 flex items-center gap-3">
+                                <Users className="text-primary flex-shrink-0" size={20} />
+                                <div className="flex-1">
+                                    <p className="text-white font-medium">{provider.provider_name || 'Unknown'}</p>
+                                    <p className="text-sm text-slate-400">
+                                        {provider.phone && `Phone: ${provider.phone}`}
+                                        {provider.specialty && ` • ${provider.specialty}`}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                        {uploadResult.providers_extracted > 10 && (
+                            <p className="text-center text-slate-400 text-sm py-2">
+                                ... and {uploadResult.providers_extracted - 10} more providers
+                            </p>
+                        )}
+                    </div>
+
+                    <button
+                        onClick={handleValidate}
+                        disabled={validating}
+                        className="w-full px-8 py-4 bg-gradient-to-r from-primary to-neon-blue text-white rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {validating ? (
+                            <>
+                                <Loader className="animate-spin" size={20} />
+                                Validating with AI Agents...
+                            </>
+                        ) : (
