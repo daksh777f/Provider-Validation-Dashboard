@@ -68,3 +68,38 @@ class ValidationService:
                 if not raw:
                     return None
                 data = json.loads(raw)
+                # Attempt to reconstruct BatchValidationResponse
+                try:
+                    return BatchValidationResponse(**data)
+                except Exception:
+                    return None
+            return cls.batch_jobs.get(batch_id)
+        except Exception as e:
+            logger.warning(f"Failed to load batch {batch_id}: {e}")
+            return None
+    
+    @staticmethod
+    def _normalize_name(name: str) -> str:
+        """Normalize provider name for matching."""
+        return name.lower().strip()
+    
+    @staticmethod
+    def _load_json(path: Path) -> Dict[str, Any]:
+        """Load JSON file with error handling."""
+        try:
+            if path.exists():
+                with open(path, 'r') as f:
+                    return json.load(f)
+        except Exception as e:
+            print(f"Error loading {path}: {e}")
+        return {}
+    
+    @staticmethod
+    def _load_html(path: Path) -> str:
+        """Load HTML file with error handling."""
+        try:
+            if path.exists():
+                with open(path, 'r') as f:
+                    return f.read()
+        except Exception as e:
+            print(f"Error loading {path}: {e}")
