@@ -198,3 +198,43 @@ I explicitly prevent the LLM from touching **structured registry JSON**. That da
 | Technology | Role | Why This, Not X |
 | :--- | :--- | :--- |
 | **FastAPI** | Backend API | Over Express/Django: First-class **async support** makes managing long-running agentic tasks and webhooks trivial. |
+| **React + TypeScript** | Frontend UI | Over Vanilla JS: **Strict typing** prevents runtime errors when handling complex, deeply nested JSON responses from the validation engine. |
+| **CrewAI** | Agent Orchestration | Over LangChain: Forces a highly opinionated, **role-based architecture** which is perfect for isolating extraction vs. analysis tasks. |
+| **Ollama (Llama 3.1)** | Local Inference | Over OpenAI API: Guarantees that **zero PHI** leaves the local infrastructure, ensuring immediate HIPAA compliance during validation. |
+| **Twilio** | SMS Gateway | Industry standard for reliable, **webhook-driven async communication**. |
+
+---
+
+## Quick Start
+
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- Ollama (installed locally with `llama3.1:latest` pulled)
+- Docker (optional, for isolated deployments)
+
+### 1. Clone & Configure
+```bash
+git clone <repository-url>
+cd provider_data_validation
+
+# Copy environment variables
+cp .env.example .env
+```
+Ensure your `.env` has:
+```ini
+DEMO_MODE=true
+OLLAMA_MODEL=llama3.1:latest
+API_PORT=8000
+TWILIO_ACCOUNT_SID=your_sid
+TWILIO_AUTH_TOKEN=your_token
+```
+
+### 2. Start the Backend
+**Mac / Linux:**
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn src.provider_data_validation.api:app --reload --port 8000
+```
