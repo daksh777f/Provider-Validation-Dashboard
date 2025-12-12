@@ -170,3 +170,46 @@ const Validation = () => {
                         </div>
 
                         {file && (
+                            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
+                                <div className="flex items-center gap-3">
+                                    <FileText className="text-primary" size={24} />
+                                    <div>
+                                        <p className="text-white font-medium">{file.name}</p>
+                                        <p className="text-sm text-slate-400">{(file.size / 1024).toFixed(2)} KB</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setFile(null)}
+                                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                                >
+                                    <X className="text-slate-400" size={20} />
+                                </button>
+                            </div>
+                        )}
+
+                        <button
+                            onClick={handleUpload}
+                            disabled={!file || uploading}
+                            className="w-full px-8 py-4 bg-gradient-to-r from-primary to-neon-blue text-white rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {uploading ? (
+                                <>
+                                    <Loader className="animate-spin" size={20} />
+                                    Uploading & Extracting...
+                                </>
+                            ) : (
+                                <>
+                                    <Upload size={20} />
+                                    Upload & Extract Providers
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Extracted Providers */}
+            {uploadResult && !validationResults && (
+                <div className="glass-panel p-8 rounded-2xl border border-white/10 space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div>
