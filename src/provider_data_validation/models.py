@@ -203,3 +203,47 @@ class VerificationSession(BaseModel):
     initial_response: Optional[str] = None  # YES/NO
     correction_text: Optional[str] = None  # Free-form corrections if NO
     
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    responded_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    
+    # SMS tracking
+    sms_sid: Optional[str] = None  # Twilio message SID
+    sms_count: int = 0  # Number of SMS sent in this session
+
+
+class VerificationRequest(BaseModel):
+    """Request to start provider verification."""
+    provider_id: str
+    provider_name: str
+    phone: str = Field(..., description="Phone number to send verification SMS")
+    
+    # Data to verify
+    specialty: Optional[str] = None
+    address: Optional[str] = None
+    license_number: Optional[str] = None
+    hospital: Optional[str] = None
+
+
+class VerificationResponse(BaseModel):
+    """Response after starting verification."""
+    success: bool
+    session_id: Optional[str] = None
+    status: Optional[VerificationStatus] = None
+    message: str
+    error: Optional[str] = None
+
+
+class SMSWebhookPayload(BaseModel):
+    """Twilio SMS webhook payload (incoming message)."""
+    MessageSid: str
+    From: str  # Sender phone number
+    To: str  # Your Twilio number
+    Body: str  # Message text
+    
+    # Optional Twilio fields
+    AccountSid: Optional[str] = None
+    MessagingServiceSid: Optional[str] = None
+    NumMedia: Optional[str] = "0"
+    SmsStatus: Optional[str] = None
