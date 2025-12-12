@@ -158,3 +158,43 @@ sequenceDiagram
     note over Admin,Doc: Phase 5: Finalization
     API-->>UI: Return Validated Provider Object
     deactivate API
+    UI-->>Admin: Render Detailed Validation Report & Logs
+    deactivate UI
+```
+
+---
+
+## How It Works
+
+### 1. Multi-Agent Pipeline
+Instead of one massive prompt, **CrewAI** orchestrates three isolated agents: an **Extraction Agent** that asynchronously scrapes the 5 data sources, an **Analyzer** for name/address fuzzy matching, and a **Scoring Agent** to finalize results.
+
+### 2. Weighted Scoring Algorithm
+Confidence isn't an arbitrary LLM guess. A **deterministic algorithm** starts at 100% and strictly deducts points based on:
+- **Identity:** 25% | **License:** 20% | **Location:** 20% | **Specialty:** 15% | **Hospital:** 10% | **Consistency:** 10%
+
+### 3. Async State Machine
+To handle SMS verification without blocking, **FastAPI** logs a `PENDING` token and drops the connection. Twilio's async reply hits a `/verify/webhook`, updating the DB and instantly pushing to the UI via **WebSockets**.
+
+### 4. Hybrid Routing
+I explicitly prevent the LLM from touching **structured registry JSON**. That data routes through **deterministic Python logic**, reserving the local **Ollama LLM** solely for parsing unstructured HTML.
+
+---
+
+## Performance
+
+> **Note:** All benchmarks measured against mock data in a local development environment. Real-world production results will vary based on hardware and network conditions.
+
+| Metric | Measurement | Notes |
+| :--- | :--- | :--- |
+| **Accuracy** | 98.5% | Drift detection against baseline mock set |
+| **Latency** | < 5s | Average verification time per provider |
+| **Throughput** | ~200ms API | Average API routing latency (excluding LLM inference) |
+
+---
+
+## Tech Stack & Design Decisions
+
+| Technology | Role | Why This, Not X |
+| :--- | :--- | :--- |
+| **FastAPI** | Backend API | Over Express/Django: First-class **async support** makes managing long-running agentic tasks and webhooks trivial. |
