@@ -238,3 +238,43 @@ const ProviderDetail = () => {
 
                 // Stop polling if completed
                 if (['CONFIRMED', 'COMPLETED', 'FAILED', 'TIMEOUT'].includes(session.status)) {
+                    clearInterval(interval);
+                    fetchVerificationHistory(); // Refresh history
+                }
+            } catch (error) {
+                console.error('Error polling status:', error);
+                clearInterval(interval);
+            }
+        }, 5000); // Poll every 5 seconds
+
+        // Stop polling after 5 minutes
+        setTimeout(() => clearInterval(interval), 300000);
+    };
+
+    const fetchProvider = async () => {
+        try {
+            // Check sessionStorage first - if we have cached data, use it
+            const cachedProvider = sessionStorage.getItem(`provider_${id}`);
+            if (cachedProvider) {
+                setProvider(JSON.parse(cachedProvider));
+                setLoading(false);
+                return;
+            }
+
+            // Load validation results from localStorage only if no cache
+            const storedResults = localStorage.getItem('validationResults');
+
+            if (!storedResults) {
+                setProvider({ id, name: 'Unknown Provider', specialty: 'N/A', verified: false, status: 'Not Found' });
+                setLoading(false);
+                return;
+            }
+
+            const results = JSON.parse(storedResults);
+            // Find the provider by ID
+            const validationResult = results.find(r => r.provider_id === id);
+
+            if (!validationResult) {
+                setProvider({ id, name: 'Unknown Provider', specialty: 'N/A', verified: false, status: 'Not Found' });
+                setLoading(false);
+                return;
