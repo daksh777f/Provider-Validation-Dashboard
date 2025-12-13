@@ -299,3 +299,46 @@ const Validation = () => {
                                 onClick={handleReset}
                                 className="px-4 py-2 border border-white/20 rounded-lg hover:bg-white/5 transition-colors text-white"
                             >
+                                Start Over
+                            </button>
+                        </div>
+
+                        {/* Bulk Actions */}
+                        <div className="flex gap-4 mb-6">
+                            <button
+                                onClick={handleCallAll}
+                                className="flex-1 px-6 py-3 bg-green-500/20 border border-green-500/30 rounded-xl text-green-400 font-semibold hover:bg-green-500/30 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Phone size={20} />
+                                Call All Providers
+                            </button>
+                            <button
+                                onClick={handleSMSAll}
+                                className="flex-1 px-6 py-3 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-400 font-semibold hover:bg-blue-500/30 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <MessageSquare size={20} />
+                                SMS All Providers
+                            </button>
+                            <button
+                                className="flex-1 px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-white font-semibold hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Download size={20} />
+                                Export Results
+                            </button>
+                        </div>
+
+                        {/* Statistics */}
+                        <div className="grid grid-cols-4 gap-4">
+                            <div className="p-4 bg-white/5 rounded-xl border border-white/10 text-center">
+                                <p className="text-slate-400 text-sm mb-1">Total</p>
+                                <p className="text-3xl font-bold text-white">{validationResults.total_providers}</p>
+                            </div>
+                            <div className="p-4 bg-green-500/10 rounded-xl border border-green-500/20 text-center">
+                                <p className="text-green-400 text-sm mb-1">Verified</p>
+                                <p className="text-3xl font-bold text-green-400">
+                                    {validationResults.results?.filter(r => r.validation_status === 'VERIFIED').length || 0}
+                                </p>
+                            </div>
+                            <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20 text-center">
+                                <p className="text-yellow-400 text-sm mb-1">Needs Review</p>
+                                <p className="text-3xl font-bold text-yellow-400">
