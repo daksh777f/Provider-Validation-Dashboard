@@ -226,3 +226,45 @@ const BulkOutreach = () => {
                                         <td className="p-3 text-white font-medium">{provider.provider_name}</td>
                                         <td className="p-3 text-slate-300">{provider.verified_phone || 'N/A'}</td>
                                         <td className="p-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-16 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full rounded-full"
+                                                        style={{
+                                                            width: `${(provider.confidence_scores?.overall_confidence || 0) * 100}%`,
+                                                            backgroundColor: (provider.confidence_scores?.overall_confidence || 0) * 100 > 80
+                                                                ? '#10b981'
+                                                                : (provider.confidence_scores?.overall_confidence || 0) * 100 > 60
+                                                                    ? '#f59e0b'
+                                                                    : '#ef4444'
+                                                        }}
+                                                    />
+                                                </div>
+                                                <span className="text-sm font-medium text-white">
+                                                    {((provider.confidence_scores?.overall_confidence || 0) * 100).toFixed(0)}%
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="p-3">
+                                            <span className={`px-3 py-1 rounded-full text-sm font-medium border ${provider.validation_status === 'VERIFIED'
+                                                    ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                                                    : provider.validation_status === 'FLAGGED'
+                                                        ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                                                        : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                                                }`}>
+                                                {provider.validation_status}
+                                            </span>
+                                        </td>
+                                        <td className="p-3 text-slate-300">{provider.issues?.length || 0}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default BulkOutreach;
