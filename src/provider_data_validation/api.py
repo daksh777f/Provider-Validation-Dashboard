@@ -250,3 +250,45 @@ async def upload_file(file: UploadFile = File(...)):
         # Convert to ProviderInput objects
         providers = []
         for provider_dict in extracted_providers:
+            try:
+                provider = ProviderInput(**provider_dict)
+                providers.append(provider)
+            except Exception as e:
+                print(f"Skipping invalid provider: {e}")
+                continue
+        
+        # Store file info
+        file_id = str(uuid.uuid4())
+        uploaded_files[file_id] = {
+            "filename": file.filename,
+            "file_type": file_type,
+            "providers_count": len(providers),
+            "providers": providers
+        }
+        
+        return FileUploadResponse(
+            file_id=file_id,
+            filename=file.filename,
+            file_type=file_type,
+            providers_extracted=len(providers),
+            extraction_status="success" if len(providers) > 0 else "no_providers_found",
+            extracted_providers=providers
+        )
+        
+    except HTTPException:
+        raise
+    except ImportError as e:
+        # OCR dependencies not installed
+        error_msg = str(e)
+        if "pytesseract" in error_msg or "pdf2image" in error_msg:
+            error_msg = "OCR libraries not installed. The PDF appears to be scanned/handwritten. Install Tesseract OCR from https://github.com/UB-Mannheim/tesseract/wiki"
+        raise HTTPException(status_code=400, detail=error_msg)
+    except ValueError as e:
+        # OCR or extraction failed
+        raise HTTPException(status_code=400, detail=f"File processing failed: {str(e)}")
+    except Exception as e:
+        # Generic error with details
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
