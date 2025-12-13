@@ -142,3 +142,39 @@ const DriftMonitoring = () => {
                                 {result.changes_detected?.length || 0} changes
                             </span>
                         </div>
+
+                        {result.changes_detected && result.changes_detected.length > 0 ? (
+                            <div className="space-y-3">
+                                {result.changes_detected.map((change, index) => (
+                                    <div
+                                        key={index}
+                                        className="p-4 bg-gray-800/50 border border-gray-700/50 rounded-xl flex items-start gap-3 hover:bg-gray-800/70 transition-colors"
+                                    >
+                                        <div className="p-2 bg-orange-500/20 rounded-lg mt-0.5">
+                                            <AlertCircle className="w-5 h-5 text-orange-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-white font-medium">{change}</p>
+                                            {change.includes('→') && (
+                                                <p className="text-sm text-gray-400 mt-1">
+                                                    Historical value → Current value
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-8 text-center">
+                                <div className="inline-block p-4 bg-green-500/20 rounded-2xl mb-4">
+                                    <Shield className="w-12 h-12 text-green-400" />
+                                </div>
+                                <p className="text-xl font-semibold text-green-400">No Changes Detected</p>
+                                <p className="text-gray-400 mt-2">
+                                    Provider credentials match historical data
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Info Box */}
