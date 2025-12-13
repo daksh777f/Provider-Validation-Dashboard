@@ -292,3 +292,45 @@ def _fuzzy_match_name(input_name: str, candidates: list[dict], name_field: str =
         if ratio > best_ratio:
             best_ratio = ratio
             best_match = candidate
+    
+    return best_match if best_ratio >= threshold else None
+
+
+# Helper function to extract provider records
+def extract_provider_data(provider_name: str) -> dict:
+    """Extract provider data from all registries using fuzzy name matching."""
+    
+    # NPI - Use fuzzy matching
+    npi_data = None
+    with open(NPI_PATH, "r", encoding="utf-8") as f:
+        providers = json.load(f)["providers"]
+        npi_data = _fuzzy_match_name(provider_name, providers, "name")
+    
+    # License - Use fuzzy matching
+    license_data = None
+    with open(LICENSE_PATH, "r", encoding="utf-8") as f:
+        licenses = json.load(f)["licenses"]
+        license_data = _fuzzy_match_name(provider_name, licenses, "doctor_name")
+    
+    # Hospital - Use fuzzy matching
+    hospital_data = None
+    with open(HOSPITAL_PATH, "r", encoding="utf-8") as f:
+        hospitals_json = json.load(f)["hospitals"]
+        # Flatten doctors from all hospitals
+        all_doctors = []
+        for h in hospitals_json:
+            for d in h["doctors"]:
+                all_doctors.append({"hospital_name": h["hospital_name"], **d})
+        
+        hospital_data = _fuzzy_match_name(provider_name, all_doctors, "name")
+    
+    # Maps - Use fuzzy matching
+    maps_data = None
+    with open(MAPS_PATH, "r", encoding="utf-8") as f:
+        listings = json.load(f)["listings"]
+        maps_data = _fuzzy_match_name(provider_name, listings, "name")
+    
+    # Clinic Website - Use fuzzy matching
+    clinic_data = None
+    with open(CLINIC_PATH, "r", encoding="utf-8") as f:
+        soup = bs4.BeautifulSoup(f.read(), "html.parser")
