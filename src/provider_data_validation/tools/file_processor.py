@@ -262,3 +262,47 @@ class FileProcessor:
             
             # Look for name patterns (Dr., MD, etc.)
             if any(prefix in line for prefix in ['dr.', 'dr ', 'prof.', 'prof ']):
+                # This might be a provider name
+                if current_provider.get("provider_name"):
+                    # Save previous provider
+                    if current_provider:
+                        providers.append(FileProcessor._standardize_provider_dict(current_provider))
+                    current_provider = {}
+                
+                current_provider["provider_name"] = line.replace("Dr.", "Dr. ").replace("Prof.", "Prof. ")
+            # Also check for simple names (2-3 words, capitalized, no numbers)
+            elif (len(line.split()) >= 2 and len(line.split()) <= 4 and 
+                  line[0].isupper() and not any(char.isdigit() for char in line) and
+                  5 < len(line) < 50):
+                if current_provider.get("provider_name"):
+                    providers.append(FileProcessor._standardize_provider_dict(current_provider))
+                    current_provider = {}
+                current_provider["provider_name"] = line
+            
+            # Look for phone patterns
+            elif any(indicator in line_lower for indicator in ['phone', 'tel:', 'contact:']):
+                # Extract phone number
+                import re
+                phone_match = re.search(r'\d{3}[-.\s]?\d{3}[-.\s]?\d{4}', line)
+                if phone_match:
+                    current_provider["phone"] = phone_match.group()
+            
+            # Look for license/NPI patterns
+            elif any(indicator in line_lower for indicator in ['license', 'npi', 'npi:']):
+                import re
+                number_match = re.search(r':\s*(\d+)', line)
+                if number_match:
+                    if 'npi' in line_lower:
+                        current_provider["npi_number"] = number_match.group(1)
+                    else:
+                        current_provider["license_no"] = number_match.group(1)
+        
+        # Add last provider
+        if current_provider.get("provider_name"):
+            providers.append(FileProcessor._standardize_provider_dict(current_provider))
+        
+        return providers
+    
+    @staticmethod
+    def _standardize_provider_dict(provider: Dict[str, Any]) -> Dict[str, Any]:
+        """
