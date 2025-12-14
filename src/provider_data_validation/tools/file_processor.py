@@ -306,3 +306,50 @@ class FileProcessor:
     @staticmethod
     def _standardize_provider_dict(provider: Dict[str, Any]) -> Dict[str, Any]:
         """
+        Standardize provider dictionary field names to match ProviderInput schema.
+        """
+        standardized = {}
+        
+        # Map common variations to standard field names
+        field_mapping = {
+            "provider_name": ["name", "provider", "provider_name", "doctor", "physician", "full_name"],
+            "phone": ["phone", "contact", "phone_number", "contact_number", "telephone"],
+            "address": ["address", "location", "clinic", "facility", "clinic_address"],
+            "specialty": ["specialty", "specialization", "credentials", "medical_specialty"],
+            "license_no": ["license", "license_no", "license_number", "license_num"],
+            "npi_number": ["npi", "npi_number"],
+            "hospital_affiliation": ["hospital", "affiliation", "hospital_affiliation", "department"]
+        }
+        
+        for target_field, source_fields in field_mapping.items():
+            for source_field in source_fields:
+                if source_field in provider:
+                    standardized[target_field] = provider[source_field]
+                    break
+        
+        return standardized
+    
+    @staticmethod
+    def get_file_type(filename: str) -> str:
+        """Determine file type from filename."""
+        filename_lower = filename.lower()
+        
+        if filename_lower.endswith('.pdf'):
+            return 'pdf'
+        elif filename_lower.endswith('.xlsx'):
+            return 'xlsx'
+        elif filename_lower.endswith('.xls'):
+            return 'xls'
+        else:
+            return 'unknown'
+    
+    @staticmethod
+    def validate_file(file_content: bytes, file_type: str) -> bool:
+        """Validate file format and content."""
+        if file_type == 'pdf':
+            # Check PDF magic number
+            return file_content.startswith(b'%PDF')
+        elif file_type in ['xlsx', 'xls']:
+            # Check ZIP magic number (XLSX is ZIP)
+            return file_content.startswith(b'PK')
+        return False
