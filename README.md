@@ -278,3 +278,49 @@ curl -X POST http://localhost:8000/validate \
     "phone": "+12345678900"
   }'
 ```
+
+**Response:**
+```json
+{
+  "status": "REQUIRES_VERIFICATION",
+  "confidence_score": 82,
+  "discrepancies": [
+    {
+      "field": "hospital_affiliation",
+      "registry_value": "Mercy General",
+      "scraped_value": "Unknown"
+    }
+  ],
+  "session_id": "val_9f8b7c6a",
+  "message": "Twilio SMS triggered to +12345678900"
+}
+```
+
+---
+
+## Project Structure
+
+```text
+provider_data_validation/
+├── src/
+│   └── provider_data_validation/
+│       ├── api.py               # FastAPI routers and webhook handlers
+│       ├── services.py          # State machine and core logic
+│       ├── crews/               # CrewAI agent definitions
+│       └── tools/               # Custom tools (Twilio dispatcher, Web scraper)
+├── external_frontend/
+│   └── src/                     # React / Vite application
+├── mock_data/                   # Deterministic test datasets
+└── scripts/                     # Environment setup scripts
+```
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+> Built by [Daksh Goel](https://github.com/daksh777f)  
+> <!-- LINKEDIN URL (optional) -->

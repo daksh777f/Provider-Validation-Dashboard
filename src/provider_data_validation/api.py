@@ -292,3 +292,45 @@ async def upload_file(file: UploadFile = File(...)):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
+
+@app.post("/upload/{file_id}/validate")
+async def validate_uploaded_file(
+    file_id: str,
+    background_tasks: BackgroundTasks,
+    priority: str = Query("normal")
+):
+    """
+    Validate all providers from an uploaded file.
+    
+    Returns batch job ID for tracking.
+    """
+    if file_id not in uploaded_files:
+        raise HTTPException(status_code=404, detail=f"File {file_id} not found")
+    
+    file_info = uploaded_files[file_id]
+    batch_id = str(uuid.uuid4())
+    
+    # Queue validation
+    background_tasks.add_task(
+        ValidationService.validate_batch,
+        file_info["providers"],
+        batch_id
+    )
+    
+    return {
+        "batch_id": batch_id,
+        "status": "QUEUED",
+        "total_providers": len(file_info["providers"]),
+        "message": f"Batch validation started for {file_info['filename']}"
+    }
+
+
+# ==================== Provider Details ====================
+
+@app.get("/validate/{provider_id}", response_model=ValidationResult)
+async def get_provider_result(provider_id: str):
+    """
+    Get validation result for a specific provider.
+    
+    Searches through all batch results.
+    """

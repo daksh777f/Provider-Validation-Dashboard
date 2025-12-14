@@ -334,3 +334,45 @@ def extract_provider_data(provider_name: str) -> dict:
     clinic_data = None
     with open(CLINIC_PATH, "r", encoding="utf-8") as f:
         soup = bs4.BeautifulSoup(f.read(), "html.parser")
+        # Extract all doctors
+        all_clinic_doctors = []
+        for div in soup.find_all("div", class_="doctor"):
+            doc_name = div.find("h2").text.strip()
+            details = {}
+            for p in div.find_all("p"):
+                try:
+                    key, value = p.text.split(":", 1)
+                    details[key.strip().lower()] = value.strip()
+                except:
+                    continue
+            
+            all_clinic_doctors.append({
+                "name": doc_name,
+                "specialty": details.get("specialty"),
+                "phone": details.get("phone"),
+                "address": details.get("address"),
+                "license_no": details.get("license no")
+            })
+        
+        clinic_data = _fuzzy_match_name(provider_name, all_clinic_doctors, "name")
+    
+    return {
+        "npi": npi_data or {},
+        "license": license_data or {},
+        "hospital": hospital_data or {},
+        "maps": maps_data or {},
+        "clinic": clinic_data or {}
+    }
+
+
+# Extraction tool for agent
+class ExtractProviderTool(BaseTool):
+    name: str = "extract_provider_records"
+    description: str = "Extract provider records from all registries with fuzzy name matching."
+    
+    def _run(self, provider_name: str) -> dict:
+        return extract_provider_data(provider_name)
+
+
+# -------------------------
+# ✅ CREW (FIXED)
