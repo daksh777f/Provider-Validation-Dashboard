@@ -103,3 +103,38 @@ class ValidationService:
                     return f.read()
         except Exception as e:
             print(f"Error loading {path}: {e}")
+        return ""
+    
+    @classmethod
+    def _search_npi_registry(cls, provider_name: str, phone: Optional[str] = None) -> Optional[Dict]:
+        """Search NPI registry for provider."""
+        npi_data = cls._load_json(cls.NPI_PATH)
+        normalized_name = cls._normalize_name(provider_name)
+        
+        for entry in npi_data.get("providers", []):
+            if cls._normalize_name(entry.get("name", "")) == normalized_name:
+                if phone:
+                    # If phone provided, verify it matches
+                    entry_phone = entry.get("phone", "").replace(" ", "").replace("-", "")
+                    input_phone = phone.replace(" ", "").replace("-", "")
+                    if entry_phone == input_phone:
+                        return entry
+                else:
+                    return entry
+        return None
+    
+    @classmethod
+    def _search_license_registry(cls, provider_name: str, license_no: Optional[str] = None) -> Optional[Dict]:
+        """Search license registry for provider."""
+        license_data = cls._load_json(cls.LICENSE_PATH)
+        normalized_name = cls._normalize_name(provider_name)
+        
+        for entry in license_data.get("licenses", []):
+            if cls._normalize_name(entry.get("name", "")) == normalized_name:
+                if license_no:
+                    if entry.get("license_number", "") == license_no:
+                        return entry
+                else:
+                    return entry
+        return None
+    
