@@ -138,3 +138,38 @@ class ValidationService:
                     return entry
         return None
     
+    @classmethod
+    def _search_hospital_roster(cls, provider_name: str) -> Optional[Dict]:
+        """Search hospital roster for provider."""
+        hospital_data = cls._load_json(cls.HOSPITAL_PATH)
+        normalized_name = cls._normalize_name(provider_name)
+        
+        for entry in hospital_data.get("roster", []):
+            if cls._normalize_name(entry.get("name", "")) == normalized_name:
+                return entry
+        return None
+    
+    @classmethod
+    def _search_maps_listing(cls, provider_name: str) -> Optional[Dict]:
+        """Search maps listing for provider."""
+        maps_data = cls._load_json(cls.MAPS_PATH)
+        normalized_name = cls._normalize_name(provider_name)
+        
+        for entry in maps_data.get("businesses", []):
+            if cls._normalize_name(entry.get("name", "")) == normalized_name:
+                return entry
+        return None
+    
+    @classmethod
+    def _extract_from_clinic_website(cls, provider_name: str) -> Optional[Dict]:
+        """Extract provider info from clinic website HTML."""
+        html_content = cls._load_html(cls.CLINIC_PATH)
+        
+        if not html_content:
+            return None
+        
+        # Simple HTML parsing for clinic info
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html_content, 'html.parser')
+            
