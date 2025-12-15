@@ -173,3 +173,38 @@ class ValidationService:
             from bs4 import BeautifulSoup
             soup = BeautifulSoup(html_content, 'html.parser')
             
+            # Look for provider sections
+            normalized_name = cls._normalize_name(provider_name)
+            
+            # Extract clinic data (this is simplified - adapt based on actual HTML structure)
+            clinic_info = {
+                "name": provider_name,
+                "phone": None,
+                "address": None,
+                "specialty": None
+            }
+            
+            # Parse based on HTML structure
+            for div in soup.find_all('div', class_='provider'):
+                if normalized_name in cls._normalize_name(div.get_text()):
+                    # Extract phone, address, specialty
+                    phone_elem = div.find('span', class_='phone')
+                    if phone_elem:
+                        clinic_info["phone"] = phone_elem.get_text().strip()
+                    
+                    address_elem = div.find('span', class_='address')
+                    if address_elem:
+                        clinic_info["address"] = address_elem.get_text().strip()
+                    
+                    specialty_elem = div.find('span', class_='specialty')
+                    if specialty_elem:
+                        clinic_info["specialty"] = specialty_elem.get_text().strip()
+                    
+                    return clinic_info if any(clinic_info.values()) else None
+        except Exception as e:
+            print(f"Error parsing clinic website: {e}")
+        
+        return None
+    
+    @classmethod
+    def validate_provider(cls, provider: ProviderInput) -> ValidationResult:
