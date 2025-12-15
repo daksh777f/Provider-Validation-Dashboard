@@ -60,3 +60,34 @@ def format_verification_sms(provider_name: str, data: Dict[str, Any]) -> str:
                 return "\n".join(message_parts)
     
     # Fallback: Ask about key fields only
+    message_parts = [f"Hi {provider_name},", "", "Please confirm:"]
+    
+    if data.get("specialty"):
+        message_parts.append(f"Specialty: {data['specialty']}")
+    if data.get("phone"):
+        message_parts.append(f"Phone: {data['phone']}")
+    
+    message_parts.append("")
+    message_parts.append("Reply YES to confirm or NO to update.")
+    
+    return "\n".join(message_parts)
+
+
+def format_correction_request_sms(provider_name: str) -> str:
+    """Format the SMS requesting corrections."""
+    return f"""Thank you {provider_name}.
+
+Please reply with correct information.
+
+Example: Specialty: Cardiology, Phone: +123456"""
+
+
+def send_verification_sms(phone: str, message: str) -> Optional[str]:
+    """
+    Send SMS (demo/mock mode - doesn't actually send).
+    In production with Twilio, replace with actual API call.
+    Returns a mock message SID.
+    """
+    try:
+        print(f"[SMS] Demo mode: would send to {phone}")
+        print(f"[SMS] Message: {message[:100]}...")  # First 100 chars
