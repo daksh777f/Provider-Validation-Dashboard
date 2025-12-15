@@ -91,3 +91,34 @@ def send_verification_sms(phone: str, message: str) -> Optional[str]:
     try:
         print(f"[SMS] Demo mode: would send to {phone}")
         print(f"[SMS] Message: {message[:100]}...")  # First 100 chars
+        
+        # Generate mock SID
+        import uuid
+        mock_sid = f"SM_{uuid.uuid4().hex[:16]}"
+        print(f"[SMS] Mock SID: {mock_sid}")
+        return mock_sid
+    except Exception as e:
+        print(f"[SMS] ERROR: {e}")
+        return None
+
+
+def create_verification_session(request: VerificationRequest) -> VerificationSession:
+    """Create a new verification session."""
+    session_id = str(uuid.uuid4())
+    
+    original_data = {}
+    if request.specialty:
+        original_data["specialty"] = request.specialty
+    if request.address:
+        original_data["address"] = request.address
+    if request.license_number:
+        original_data["license_number"] = request.license_number
+    if request.hospital:
+        original_data["hospital"] = request.hospital
+    # Always include phone even though we're sending TO it
+    original_data["phone"] = request.phone
+    
+    session = VerificationSession(
+        session_id=session_id,
+        provider_id=request.provider_id,
+        provider_name=request.provider_name,
