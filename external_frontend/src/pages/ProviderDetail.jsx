@@ -278,3 +278,43 @@ const ProviderDetail = () => {
                 setProvider({ id, name: 'Unknown Provider', specialty: 'N/A', verified: false, status: 'Not Found' });
                 setLoading(false);
                 return;
+            }
+
+            // Map validation result to provider detail format
+            const providerData = {
+                id: validationResult.provider_id,
+                name: validationResult.provider_name,
+                specialty: validationResult.verified_specialty || 'Unknown',
+                phone: validationResult.verified_phone || 'N/A',
+                address: validationResult.verified_address || 'N/A',
+                email: validationResult.verified_email || 'N/A',
+                npi: validationResult.npi_number || 'N/A',
+
+                // Get old values from discrepancies
+                oldPhone: validationResult.discrepancies?.phone?.current_value || validationResult.verified_phone,
+                oldAddress: validationResult.discrepancies?.address?.current_value || validationResult.verified_address,
+                oldSpecialty: validationResult.discrepancies?.specialty?.current_value,
+
+                // All discrepancies for comprehensive display
+                discrepancies: validationResult.discrepancies || {},
+
+                // Status mapping
+                status: validationResult.validation_status === 'VERIFIED' ? 'Verified' :
+                    validationResult.validation_status === 'PARTIALLY_VERIFIED' ? 'Needs Review' :
+                        validationResult.validation_status === 'FLAGGED' ? 'Needs Review' : 'Auto-Updated',
+                verified: validationResult.validation_status === 'VERIFIED',
+                validationStatus: validationResult.validation_status,
+
+                // Confidence scores
+                confidence: Math.round(validationResult.confidence_scores.overall_confidence * 100),
+                confidenceScore: Math.round(validationResult.confidence_scores.overall_confidence * 100),
+                confidenceScores: validationResult.confidence_scores,
+
+                // Source information - store ALL matched sources
+                sourcesMatched: validationResult.sources_matched || [],
+                sourcesChecked: validationResult.sources_checked || [],
+                lastUpdated: validationResult.validation_timestamp || new Date().toISOString(),
+
+                // Additional metadata
+                matchedSources: validationResult.sources_matched?.length || 0,
+
