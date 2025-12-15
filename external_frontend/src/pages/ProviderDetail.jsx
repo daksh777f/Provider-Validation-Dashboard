@@ -358,3 +358,43 @@ const ProviderDetail = () => {
                 </div>
                 <div className={`px-4 py-2 rounded-full border ${provider.status === 'Verified' ? 'bg-green-500/20 border-green-500/30 text-green-400' :
                     provider.status === 'Needs Review' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
+                        'bg-blue-500/20 border-blue-500/30 text-blue-400'
+                    }`}>
+                    <span className="font-bold uppercase tracking-wider text-xs flex items-center gap-2">
+                        {provider.status === 'Verified' ? <CheckCircle size={14} /> :
+                            provider.status === 'Needs Review' ? <AlertTriangle size={14} /> :
+                                <Clock size={14} />}
+                        {provider.status}
+                    </span>
+                </div>
+            </div>
+
+            {/* Manual Review Banner */}
+            {provider.requiresManualReview && (
+                <div className="glass-panel p-4 rounded-xl border-2 border-yellow-500/50 bg-yellow-500/10">
+                    <div className="flex items-center gap-3">
+                        <AlertTriangle size={24} className="text-yellow-400" />
+                        <div>
+                            <h4 className="font-semibold text-yellow-400">Requires Manual Review</h4>
+                            <p className="text-sm text-slate-300">This provider has been flagged for manual verification</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Compliance Intelligence Panel */}
+            <CompliancePanel providerId={provider.id} providerData={provider} />
+
+            {/* Issues & Risk Flags */}
+            {(provider.issues?.length > 0 || provider.riskFlags?.length > 0 || (provider.licenseInfo?.status && provider.licenseInfo.status !== 'Active')) && (
+                <div className="glass-panel p-6 rounded-2xl border-2 border-red-500/30">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-red-400">
+                        <AlertTriangle size={20} />
+                        Issues Detected
+                    </h3>
+                    <div className="space-y-3">
+                        {/* License Status Issues */}
+                        {provider.licenseInfo?.status && provider.licenseInfo.status !== 'Active' && (
+                            <div className={`p-4 rounded-xl border-2 ${provider.licenseInfo.status === 'Revoked' ? 'bg-red-500/20 border-red-500 text-red-300' :
+                                provider.licenseInfo.status === 'Suspended' ? 'bg-orange-500/20 border-orange-500 text-orange-300' :
+                                    'bg-yellow-500/20 border-yellow-500 text-yellow-300'
