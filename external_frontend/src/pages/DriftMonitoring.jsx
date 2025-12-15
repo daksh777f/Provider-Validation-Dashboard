@@ -178,3 +178,40 @@ const DriftMonitoring = () => {
                     </div>
 
                     {/* Info Box */}
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3">
+                        <div className="p-2 bg-blue-500/20 rounded-lg">
+                            <AlertCircle className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <div className="text-sm text-blue-300">
+                            <p className="font-semibold mb-1">About Risk Scores</p>
+                            <p className="text-blue-200/80">
+                                Risk scores are calculated based on the severity of changes: License status changes (+30),
+                                Hospital affiliation changes (+20), Contact updates (+15), and Specialty changes (+10).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Sample Providers */}
+            {!result && !loading && (
+                <div className="bg-gray-900/60 backdrop-blur-md border border-gray-700/50 rounded-2xl p-6">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-300">Try with sample providers:</h3>
+                    <div className="flex flex-wrap gap-3">
+                        {['Dr Shalini Rao', 'Dr Aarav Mehta', 'Dr Ritu Sharma'].map((name) => (
+                            <button
+                                key={name}
+                                onClick={() => setProviderName(name)}
+                                className="px-4 py-2 bg-gray-800/50 border border-gray-700/50 rounded-lg hover:bg-gray-800 hover:border-purple-500/50 transition-all"
+                            >
+                                {name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default DriftMonitoring;

@@ -376,3 +376,45 @@ class ExtractProviderTool(BaseTool):
 
 # -------------------------
 # ✅ CREW (FIXED)
+# -------------------------
+
+@CrewBase
+class DataValidationCrew:
+    agents_config = "config/agents.yaml"
+    tasks_config = "config/tasks.yaml"
+
+    ollama_llm = LLM(
+        model="ollama/llama3.1:latest",
+        base_url="http://localhost:11434",
+        api_key="not-needed",
+    )
+
+    @agent
+    def data_extraction_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config["data_extraction_agent"],
+            tools=[ExtractProviderTool()],
+            llm=self.ollama_llm,
+            verbose=True,
+        )
+
+    # ✅ AGENT 2 — DATA VALIDATOR
+    @agent
+    def data_validation_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config["data_validation_agent"],
+            llm=self.ollama_llm,
+            verbose=True,
+        )
+
+    # ✅ TASK 1 — LOAD DATA
+    @task
+    def data_extraction_task(self) -> Task:
+        return Task(
+            config=self.tasks_config["data_extraction_task"],
+            agent=self.data_extraction_agent(),
+        )
+
+    # ✅ TASK 2 — VALIDATE PROVIDER
+    @task
+    def data_validation_task(self) -> Task:

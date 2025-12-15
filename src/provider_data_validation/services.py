@@ -138,3 +138,108 @@ class ValidationService:
                     return entry
         return None
     
+    @classmethod
+    def _search_hospital_roster(cls, provider_name: str) -> Optional[Dict]:
+        """Search hospital roster for provider."""
+        hospital_data = cls._load_json(cls.HOSPITAL_PATH)
+        normalized_name = cls._normalize_name(provider_name)
+        
+        for entry in hospital_data.get("roster", []):
+            if cls._normalize_name(entry.get("name", "")) == normalized_name:
+                return entry
+        return None
+    
+    @classmethod
+    def _search_maps_listing(cls, provider_name: str) -> Optional[Dict]:
+        """Search maps listing for provider."""
+        maps_data = cls._load_json(cls.MAPS_PATH)
+        normalized_name = cls._normalize_name(provider_name)
+        
+        for entry in maps_data.get("businesses", []):
+            if cls._normalize_name(entry.get("name", "")) == normalized_name:
+                return entry
+        return None
+    
+    @classmethod
+    def _extract_from_clinic_website(cls, provider_name: str) -> Optional[Dict]:
+        """Extract provider info from clinic website HTML."""
+        html_content = cls._load_html(cls.CLINIC_PATH)
+        
+        if not html_content:
+            return None
+        
+        # Simple HTML parsing for clinic info
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html_content, 'html.parser')
+            
+            # Look for provider sections
+            normalized_name = cls._normalize_name(provider_name)
+            
+            # Extract clinic data (this is simplified - adapt based on actual HTML structure)
+            clinic_info = {
+                "name": provider_name,
+                "phone": None,
+                "address": None,
+                "specialty": None
+            }
+            
+            # Parse based on HTML structure
+            for div in soup.find_all('div', class_='provider'):
+                if normalized_name in cls._normalize_name(div.get_text()):
+                    # Extract phone, address, specialty
+                    phone_elem = div.find('span', class_='phone')
+                    if phone_elem:
+                        clinic_info["phone"] = phone_elem.get_text().strip()
+                    
+                    address_elem = div.find('span', class_='address')
+                    if address_elem:
+                        clinic_info["address"] = address_elem.get_text().strip()
+                    
+                    specialty_elem = div.find('span', class_='specialty')
+                    if specialty_elem:
+                        clinic_info["specialty"] = specialty_elem.get_text().strip()
+                    
+                    return clinic_info if any(clinic_info.values()) else None
+        except Exception as e:
+            print(f"Error parsing clinic website: {e}")
+        
+        return None
+    
+    @classmethod
+    def validate_provider(cls, provider: ProviderInput) -> ValidationResult:
+        """
+        Validate a single provider against all data sources using DataValidationCrew with Ollama.
+        Returns comprehensive validation result with confidence scores.
+        """
+        start_time = time.time()
+        provider_id = str(uuid.uuid4())
+        
+        # ============================================================
+        # HYBRID APPROACH: Try Ollama crew first, fallback to helpers
+        # ============================================================
+        crew_failed = False
+        
+        # Run DataValidationCrew with Ollama
+        try:
+            if not settings.ENABLE_LLM:
+                print("⚠️ LLM features disabled. Skipping crew execution...")
+                crew_failed = True
+            else:
+                from .crews.data_validation_crew.data_validation_crew import DataValidationCrew
+                
+                print(f"\n🤖 Attempting validation with Ollama crew...")
+                
+                # Create and run the crew with Ollama agents
+                crew = DataValidationCrew()
+                result = crew.crew().kickoff(inputs={"provider_name": provider.provider_name})
+                
+                # Parse the crew output
+                import json
+                import re
+                
+                # Extract JSON from crew result
+                result_str = str(result.raw) if hasattr(result, 'raw') else str(result)
+                result_str = re.sub(r'```json\s*|\s*```', '', result_str).strip()
+                
+                # Check if result is empty

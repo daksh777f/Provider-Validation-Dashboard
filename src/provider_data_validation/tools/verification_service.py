@@ -60,3 +60,96 @@ def format_verification_sms(provider_name: str, data: Dict[str, Any]) -> str:
                 return "\n".join(message_parts)
     
     # Fallback: Ask about key fields only
+    message_parts = [f"Hi {provider_name},", "", "Please confirm:"]
+    
+    if data.get("specialty"):
+        message_parts.append(f"Specialty: {data['specialty']}")
+    if data.get("phone"):
+        message_parts.append(f"Phone: {data['phone']}")
+    
+    message_parts.append("")
+    message_parts.append("Reply YES to confirm or NO to update.")
+    
+    return "\n".join(message_parts)
+
+
+def format_correction_request_sms(provider_name: str) -> str:
+    """Format the SMS requesting corrections."""
+    return f"""Thank you {provider_name}.
+
+Please reply with correct information.
+
+Example: Specialty: Cardiology, Phone: +123456"""
+
+
+def send_verification_sms(phone: str, message: str) -> Optional[str]:
+    """
+    Send SMS (demo/mock mode - doesn't actually send).
+    In production with Twilio, replace with actual API call.
+    Returns a mock message SID.
+    """
+    try:
+        print(f"[SMS] Demo mode: would send to {phone}")
+        print(f"[SMS] Message: {message[:100]}...")  # First 100 chars
+        
+        # Generate mock SID
+        import uuid
+        mock_sid = f"SM_{uuid.uuid4().hex[:16]}"
+        print(f"[SMS] Mock SID: {mock_sid}")
+        return mock_sid
+    except Exception as e:
+        print(f"[SMS] ERROR: {e}")
+        return None
+
+
+def create_verification_session(request: VerificationRequest) -> VerificationSession:
+    """Create a new verification session."""
+    session_id = str(uuid.uuid4())
+    
+    original_data = {}
+    if request.specialty:
+        original_data["specialty"] = request.specialty
+    if request.address:
+        original_data["address"] = request.address
+    if request.license_number:
+        original_data["license_number"] = request.license_number
+    if request.hospital:
+        original_data["hospital"] = request.hospital
+    # Always include phone even though we're sending TO it
+    original_data["phone"] = request.phone
+    
+    session = VerificationSession(
+        session_id=session_id,
+        provider_id=request.provider_id,
+        provider_name=request.provider_name,
+        phone=request.phone,
+        original_data=original_data,
+        status=VerificationStatus.PENDING_RESPONSE,
+    )
+    
+    verification_store.create_session(session)
+    return session
+
+
+def start_verification(request: VerificationRequest, enriched_data: Dict[str, Any] = None) -> tuple[bool, str, Optional[VerificationSession]]:
+    """
+    Start a verification workflow.
+    Returns (success, message, session).
+    
+    Args:
+        request: Verification request with provider details
+        enriched_data: Optional dict with validation results (issues, discrepancies)
+    """
+    # Check if there's already an active session for this phone
+    existing_session = _ensure_session_model(verification_store.get_session_by_phone(request.phone))
+    if existing_session and existing_session.status == VerificationStatus.PENDING_RESPONSE:
+        return False, f"Active verification already in progress for this phone number", existing_session
+    
+    # Create new session
+    session = create_verification_session(request)
+    
+    # Use enriched data if available, otherwise use request data
+    data_for_sms = enriched_data if enriched_data else session.original_data
+    
+    # Format and send initial SMS (will be smart if enriched_data has issues/discrepancies)
+    sms_message = format_verification_sms(request.provider_name, data_for_sms)

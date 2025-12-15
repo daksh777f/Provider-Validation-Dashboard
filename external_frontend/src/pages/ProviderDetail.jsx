@@ -278,3 +278,123 @@ const ProviderDetail = () => {
                 setProvider({ id, name: 'Unknown Provider', specialty: 'N/A', verified: false, status: 'Not Found' });
                 setLoading(false);
                 return;
+            }
+
+            // Map validation result to provider detail format
+            const providerData = {
+                id: validationResult.provider_id,
+                name: validationResult.provider_name,
+                specialty: validationResult.verified_specialty || 'Unknown',
+                phone: validationResult.verified_phone || 'N/A',
+                address: validationResult.verified_address || 'N/A',
+                email: validationResult.verified_email || 'N/A',
+                npi: validationResult.npi_number || 'N/A',
+
+                // Get old values from discrepancies
+                oldPhone: validationResult.discrepancies?.phone?.current_value || validationResult.verified_phone,
+                oldAddress: validationResult.discrepancies?.address?.current_value || validationResult.verified_address,
+                oldSpecialty: validationResult.discrepancies?.specialty?.current_value,
+
+                // All discrepancies for comprehensive display
+                discrepancies: validationResult.discrepancies || {},
+
+                // Status mapping
+                status: validationResult.validation_status === 'VERIFIED' ? 'Verified' :
+                    validationResult.validation_status === 'PARTIALLY_VERIFIED' ? 'Needs Review' :
+                        validationResult.validation_status === 'FLAGGED' ? 'Needs Review' : 'Auto-Updated',
+                verified: validationResult.validation_status === 'VERIFIED',
+                validationStatus: validationResult.validation_status,
+
+                // Confidence scores
+                confidence: Math.round(validationResult.confidence_scores.overall_confidence * 100),
+                confidenceScore: Math.round(validationResult.confidence_scores.overall_confidence * 100),
+                confidenceScores: validationResult.confidence_scores,
+
+                // Source information - store ALL matched sources
+                sourcesMatched: validationResult.sources_matched || [],
+                sourcesChecked: validationResult.sources_checked || [],
+                lastUpdated: validationResult.validation_timestamp || new Date().toISOString(),
+
+                // Additional metadata
+                matchedSources: validationResult.sources_matched?.length || 0,
+
+                // License and hospital info
+                licenseInfo: validationResult.license_info,
+                hospitalAffiliation: validationResult.hospital_affiliation,
+
+                // VALIDATION ISSUES & FLAGS
+                issues: validationResult.issues || [],
+                riskFlags: validationResult.risk_flags || [],
+                requiresManualReview: validationResult.requires_manual_review || false,
+                requiresContactVerification: validationResult.requires_contact_verification || false,
+                nextSteps: validationResult.next_steps || []
+            };
+
+            setProvider(providerData);
+            setLoading(false);
+        } catch (error) {
+            console.error("Error fetching provider", error);
+            setProvider({ id, name: 'Unknown Provider', specialty: 'N/A', verified: false, status: 'Not Found' });
+            setLoading(false);
+        }
+    };
+
+    if (loading) return <div className="p-8 text-center">Loading...</div>;
+    if (!provider) return <div className="p-8 text-center">Provider not found</div>;
+
+    return (
+        <div className="space-y-6 animate-fade-in">
+            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <ArrowLeft size={18} /> Back to Directory
+            </button>
+
+            <div className="flex justify-between items-start">
+                <div>
+                    <h1 className="text-3xl font-poster text-white">{provider.name}</h1>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-slate-400">
+                        <span className="bg-white/5 px-2 py-1 rounded border border-white/10">ID: {provider.id}</span>
+                        <span>{provider.specialty}</span>
+                    </div>
+                </div>
+                <div className={`px-4 py-2 rounded-full border ${provider.status === 'Verified' ? 'bg-green-500/20 border-green-500/30 text-green-400' :
+                    provider.status === 'Needs Review' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
+                        'bg-blue-500/20 border-blue-500/30 text-blue-400'
+                    }`}>
+                    <span className="font-bold uppercase tracking-wider text-xs flex items-center gap-2">
+                        {provider.status === 'Verified' ? <CheckCircle size={14} /> :
+                            provider.status === 'Needs Review' ? <AlertTriangle size={14} /> :
+                                <Clock size={14} />}
+                        {provider.status}
+                    </span>
+                </div>
+            </div>
+
+            {/* Manual Review Banner */}
+            {provider.requiresManualReview && (
+                <div className="glass-panel p-4 rounded-xl border-2 border-yellow-500/50 bg-yellow-500/10">
+                    <div className="flex items-center gap-3">
+                        <AlertTriangle size={24} className="text-yellow-400" />
+                        <div>
+                            <h4 className="font-semibold text-yellow-400">Requires Manual Review</h4>
+                            <p className="text-sm text-slate-300">This provider has been flagged for manual verification</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Compliance Intelligence Panel */}
+            <CompliancePanel providerId={provider.id} providerData={provider} />
+
+            {/* Issues & Risk Flags */}
+            {(provider.issues?.length > 0 || provider.riskFlags?.length > 0 || (provider.licenseInfo?.status && provider.licenseInfo.status !== 'Active')) && (
+                <div className="glass-panel p-6 rounded-2xl border-2 border-red-500/30">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-red-400">
+                        <AlertTriangle size={20} />
+                        Issues Detected
+                    </h3>
+                    <div className="space-y-3">
+                        {/* License Status Issues */}
+                        {provider.licenseInfo?.status && provider.licenseInfo.status !== 'Active' && (
+                            <div className={`p-4 rounded-xl border-2 ${provider.licenseInfo.status === 'Revoked' ? 'bg-red-500/20 border-red-500 text-red-300' :
+                                provider.licenseInfo.status === 'Suspended' ? 'bg-orange-500/20 border-orange-500 text-orange-300' :
+                                    'bg-yellow-500/20 border-yellow-500 text-yellow-300'

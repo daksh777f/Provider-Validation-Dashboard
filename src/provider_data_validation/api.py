@@ -334,3 +334,45 @@ async def get_provider_result(provider_id: str):
     
     Searches through all batch results.
     """
+    for batch in ValidationService.batch_jobs.values():
+        for result in batch.results:
+            if result.provider_id == provider_id:
+                return result
+    
+    raise HTTPException(status_code=404, detail=f"Provider {provider_id} not found")
+
+
+# ==================== Webhook/Notification Support ====================
+
+@app.post("/webhook/test")
+async def test_webhook(webhook_url: str):
+    """
+    Test webhook connectivity.
+    """
+    import httpx
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                webhook_url,
+                json={"status": "webhook_test", "timestamp": str(__import__('datetime').datetime.utcnow())}
+            )
+            return {"webhook_status": "ok", "response_code": response.status_code}
+    except Exception as e:
+        return {"webhook_status": "error", "error": str(e)}
+
+
+# ==================== Error Handlers ====================
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    error_response = ErrorResponse(
+        error=exc.detail,
+        code="HTTP_ERROR",
+        details={"path": str(request.url.path)}
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=error_response.model_dump(mode='json')
+    )
+
