@@ -208,3 +208,38 @@ class ValidationService:
     
     @classmethod
     def validate_provider(cls, provider: ProviderInput) -> ValidationResult:
+        """
+        Validate a single provider against all data sources using DataValidationCrew with Ollama.
+        Returns comprehensive validation result with confidence scores.
+        """
+        start_time = time.time()
+        provider_id = str(uuid.uuid4())
+        
+        # ============================================================
+        # HYBRID APPROACH: Try Ollama crew first, fallback to helpers
+        # ============================================================
+        crew_failed = False
+        
+        # Run DataValidationCrew with Ollama
+        try:
+            if not settings.ENABLE_LLM:
+                print("⚠️ LLM features disabled. Skipping crew execution...")
+                crew_failed = True
+            else:
+                from .crews.data_validation_crew.data_validation_crew import DataValidationCrew
+                
+                print(f"\n🤖 Attempting validation with Ollama crew...")
+                
+                # Create and run the crew with Ollama agents
+                crew = DataValidationCrew()
+                result = crew.crew().kickoff(inputs={"provider_name": provider.provider_name})
+                
+                # Parse the crew output
+                import json
+                import re
+                
+                # Extract JSON from crew result
+                result_str = str(result.raw) if hasattr(result, 'raw') else str(result)
+                result_str = re.sub(r'```json\s*|\s*```', '', result_str).strip()
+                
+                # Check if result is empty
