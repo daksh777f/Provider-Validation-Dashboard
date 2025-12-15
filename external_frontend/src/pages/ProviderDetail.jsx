@@ -318,3 +318,43 @@ const ProviderDetail = () => {
                 // Additional metadata
                 matchedSources: validationResult.sources_matched?.length || 0,
 
+                // License and hospital info
+                licenseInfo: validationResult.license_info,
+                hospitalAffiliation: validationResult.hospital_affiliation,
+
+                // VALIDATION ISSUES & FLAGS
+                issues: validationResult.issues || [],
+                riskFlags: validationResult.risk_flags || [],
+                requiresManualReview: validationResult.requires_manual_review || false,
+                requiresContactVerification: validationResult.requires_contact_verification || false,
+                nextSteps: validationResult.next_steps || []
+            };
+
+            setProvider(providerData);
+            setLoading(false);
+        } catch (error) {
+            console.error("Error fetching provider", error);
+            setProvider({ id, name: 'Unknown Provider', specialty: 'N/A', verified: false, status: 'Not Found' });
+            setLoading(false);
+        }
+    };
+
+    if (loading) return <div className="p-8 text-center">Loading...</div>;
+    if (!provider) return <div className="p-8 text-center">Provider not found</div>;
+
+    return (
+        <div className="space-y-6 animate-fade-in">
+            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <ArrowLeft size={18} /> Back to Directory
+            </button>
+
+            <div className="flex justify-between items-start">
+                <div>
+                    <h1 className="text-3xl font-poster text-white">{provider.name}</h1>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-slate-400">
+                        <span className="bg-white/5 px-2 py-1 rounded border border-white/10">ID: {provider.id}</span>
+                        <span>{provider.specialty}</span>
+                    </div>
+                </div>
+                <div className={`px-4 py-2 rounded-full border ${provider.status === 'Verified' ? 'bg-green-500/20 border-green-500/30 text-green-400' :
+                    provider.status === 'Needs Review' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
