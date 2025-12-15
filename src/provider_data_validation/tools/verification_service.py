@@ -122,3 +122,34 @@ def create_verification_session(request: VerificationRequest) -> VerificationSes
         session_id=session_id,
         provider_id=request.provider_id,
         provider_name=request.provider_name,
+        phone=request.phone,
+        original_data=original_data,
+        status=VerificationStatus.PENDING_RESPONSE,
+    )
+    
+    verification_store.create_session(session)
+    return session
+
+
+def start_verification(request: VerificationRequest, enriched_data: Dict[str, Any] = None) -> tuple[bool, str, Optional[VerificationSession]]:
+    """
+    Start a verification workflow.
+    Returns (success, message, session).
+    
+    Args:
+        request: Verification request with provider details
+        enriched_data: Optional dict with validation results (issues, discrepancies)
+    """
+    # Check if there's already an active session for this phone
+    existing_session = _ensure_session_model(verification_store.get_session_by_phone(request.phone))
+    if existing_session and existing_session.status == VerificationStatus.PENDING_RESPONSE:
+        return False, f"Active verification already in progress for this phone number", existing_session
+    
+    # Create new session
+    session = create_verification_session(request)
+    
+    # Use enriched data if available, otherwise use request data
+    data_for_sms = enriched_data if enriched_data else session.original_data
+    
+    # Format and send initial SMS (will be smart if enriched_data has issues/discrepancies)
+    sms_message = format_verification_sms(request.provider_name, data_for_sms)
