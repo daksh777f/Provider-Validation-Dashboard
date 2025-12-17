@@ -342,3 +342,46 @@ const Validation = () => {
                             <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20 text-center">
                                 <p className="text-yellow-400 text-sm mb-1">Needs Review</p>
                                 <p className="text-3xl font-bold text-yellow-400">
+                                    {validationResults.results?.filter(r => r.validation_status === 'PARTIALLY_VERIFIED').length || 0}
+                                </p>
+                            </div>
+                            <div className="p-4 bg-red-500/10 rounded-xl border border-red-500/20 text-center">
+                                <p className="text-red-400 text-sm mb-1">Issues</p>
+                                <p className="text-3xl font-bold text-red-400">
+                                    {validationResults.results?.filter(r => r.validation_status === 'UNVERIFIED' || r.validation_status === 'FLAGGED').length || 0}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Results Table */}
+                    <div className="glass-panel rounded-2xl overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-white/5 border-b border-white/10">
+                                    <tr className="text-left text-slate-400 text-sm uppercase tracking-wider">
+                                        <th className="p-4 font-medium">Provider</th>
+                                        <th className="p-4 font-medium">Contact</th>
+                                        <th className="p-4 font-medium">Confidence</th>
+                                        <th className="p-4 font-medium">Status</th>
+                                        <th className="p-4 font-medium">Issues</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {validationResults.results && validationResults.results.map((result, idx) => (
+                                        <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                            <td className="p-4">
+                                                <div className="font-medium text-white">{result.provider_name || 'Unknown'}</div>
+                                                {result.verified_specialty && (
+                                                    <div className="text-sm text-slate-400">{result.verified_specialty}</div>
+                                                )}
+                                            </td>
+                                            <td className="p-4">
+                                                {result.verified_phone && (
+                                                    <div className="text-sm text-slate-300 flex items-center gap-2">
+                                                        <Phone size={14} className="text-green-400" />
+                                                        {result.verified_phone}
+                                                    </div>
+                                                )}
+                                                {result.verified_address && (
+                                                    <div className="text-xs text-slate-400 mt-1">{result.verified_address}</div>

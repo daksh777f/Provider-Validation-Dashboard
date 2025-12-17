@@ -398,3 +398,43 @@ const ProviderDetail = () => {
                             <div className={`p-4 rounded-xl border-2 ${provider.licenseInfo.status === 'Revoked' ? 'bg-red-500/20 border-red-500 text-red-300' :
                                 provider.licenseInfo.status === 'Suspended' ? 'bg-orange-500/20 border-orange-500 text-orange-300' :
                                     'bg-yellow-500/20 border-yellow-500 text-yellow-300'
+                                }`}>
+                                <div className="flex items-start gap-3">
+                                    <Shield size={20} className="mt-0.5" />
+                                    <div>
+                                        <p className="font-semibold">License Status: {provider.licenseInfo.status}</p>
+                                        {provider.licenseInfo.license_number && (
+                                            <p className="text-sm opacity-90">License: {provider.licenseInfo.license_number}</p>
+                                        )}
+                                        {provider.licenseInfo.status === 'Revoked' && (
+                                            <p className="text-sm mt-1 font-medium">Provider should NOT be practicing with revoked license</p>
+                                        )}
+                                        {provider.licenseInfo.status === 'Suspended' && (
+                                            <p className="text-sm mt-1 font-medium">License suspended - requires immediate review</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Validation Issues */}
+                        {provider.issues?.map((issue, idx) => {
+                            const severityColors = {
+                                'CRITICAL': 'bg-red-500/20 border-red-500/50 text-red-300',
+                                'HIGH': 'bg-orange-500/20 border-orange-500/50 text-orange-300',
+                                'MEDIUM': 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300',
+                                'LOW': 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                            };
+                            return (
+                                <div key={idx} className={`p-3 rounded-lg border ${severityColors[issue.severity] || severityColors['LOW']}`}>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1">
+                                            <p className="font-medium">{issue.issue}</p>
+                                            {issue.source && <p className="text-xs mt-1 opacity-75">Source: {issue.source}</p>}
+                                            {issue.recommendation && (
+                                                <p className="text-sm mt-2 italic">→ {issue.recommendation}</p>
+                                            )}
+                                        </div>
+                                        <span className="text-xs px-2 py-0.5 bg-white/10 rounded">{issue.severity}</span>
+                                    </div>
+                                </div>

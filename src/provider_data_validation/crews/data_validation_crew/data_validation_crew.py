@@ -418,3 +418,50 @@ class DataValidationCrew:
     # ✅ TASK 2 — VALIDATE PROVIDER
     @task
     def data_validation_task(self) -> Task:
+        # Create custom description with the extracted data to guide the validation
+        return Task(
+            description=f"""
+You will receive structured extracted data:
+
+{{
+  "npi": {{}},
+  "license": {{}},
+  "hospital": {{}},
+  "maps": {{}},
+  "clinic": {{}}
+}}
+
+You MUST compute and return ONLY valid JSON with these fields:
+- identity.match_score (0.0-1.0)
+- license.confidence (0.0-1.0)
+- location.confidence (0.0-1.0) 
+- affiliation.confidence (0.0-1.0)
+- specialty.confidence (0.0-1.0)
+- overall_validation_confidence (0.0-1.0)
+- requires_contact_verification (true/false)
+
+Return this exact JSON structure - no markdown, no explanations:
+{{
+  "identity": {{"match_score": 0.00, "matched_sources": []}},
+  "license": {{"license_no": "", "status": "", "valid_till": "", "confidence": 0.00}},
+  "location": {{"input_phone": "", "verified_phone": "", "input_address": "", "verified_address": "", "confidence": 0.00, "needs_verification": false}},
+  "affiliation": {{"hospital": "", "department": "", "confidence": 0.00}},
+  "specialty": {{"input_specialty": "", "verified_specialty": "", "confidence": 0.00}},
+  "issues": [],
+  "overall_validation_confidence": 0.00,
+  "requires_contact_verification": false
+}}
+""",
+            expected_output="Valid JSON with all required validation fields",
+            agent=self.data_validation_agent(),
+        )
+
+    # ✅ CREW PIPELINE
+    @crew
+    def crew(self) -> Crew:
+        return Crew(
+            agents=self.agents,
+            tasks=self.tasks,
+            process=Process.sequential,
+            verbose=True,
+        )
