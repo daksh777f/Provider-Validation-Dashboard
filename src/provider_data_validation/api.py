@@ -502,3 +502,45 @@ async def start_provider_verification(request: VerificationRequest):
             return VerificationResponse(
                 success=True,
                 session_id=session.session_id,
+                status=session.status,
+                message=message
+            )
+        else:
+            return VerificationResponse(
+                success=False,
+                session_id=session.session_id if session else None,
+                status=session.status if session else None,
+                message=message,
+                error=message
+            )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
+
+
+@app.post("/verify/webhook")
+async def verification_sms_webhook(request: Request):
+    """
+    Twilio webhook endpoint for incoming SMS responses.
+    Configure this URL in your Twilio console.
+    """
+    try:
+        from .tools.verification_service import process_sms_response
+        
+        # Parse form data from Twilio webhook
+        form_data = await request.form()
+        from_phone = form_data.get("From", "")
+        message_body = form_data.get("Body", "")
+
+        # If Twilio auth token is configured, validate signature
+        try:
+            signature = request.headers.get('X-Twilio-Signature') or request.headers.get('x-twilio-signature')
+            if settings.TWILIO_AUTH_TOKEN and signature:
+                from twilio.request_validator import RequestValidator
+                validator = RequestValidator(settings.TWILIO_AUTH_TOKEN)
+                # FastAPI request.url contains the full URL
+                valid = validator.validate(str(request.url), dict(form_data), signature)
+                if not valid:
+                    raise HTTPException(status_code=403, detail="Invalid Twilio signature")
+        except HTTPException:
