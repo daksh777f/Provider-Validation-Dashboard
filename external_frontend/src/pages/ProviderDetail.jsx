@@ -558,3 +558,43 @@ const ProviderDetail = () => {
                 )}
             </div>
 
+            {/* Call Verification Section - Separate Block */}
+            <div className="glass-panel p-6 rounded-2xl mb-8 border-2 border-purple-500/30">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2 text-purple-400">
+                        <PhoneCall size={20} />
+                        Call Verification
+                    </h3>
+                    <button
+                        onClick={() => {
+                            setCallPollingEnabled(true);
+                            alert('Call verification webhook is now active!\n\nWebhook URL:\n' +
+                                window.location.origin.replace('5173', '8000') + '/verify/omni-webhook\n\n' +
+                                'Initiate the call through Omni Dimension dashboard.\nData will appear here automatically when received.');
+                        }}
+                        disabled={!provider.phone || provider.phone === 'N/A'}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                    >
+                        <PhoneCall size={16} />
+                        Start Call Verification
+                    </button>
+                </div>
+
+                {callLoading && (
+                    <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30 mb-4">
+                        <p className="text-sm text-purple-300">Waiting for call webhook data...</p>
+                        <p className="text-xs text-slate-400 mt-1">Polling every 10 seconds</p>
+                    </div>
+                )}
+
+                {!callVerification && !callLoading && (
+                    <div className="p-4 bg-slate-900/50 rounded-xl border border-white/10">
+                        <p className="text-sm text-slate-400 text-center">
+                            No call verification data yet. Click "Start Call Verification" to begin.
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* Call Verification Data Display - Only when webhook data exists */}
+            {callVerification && (
