@@ -460,3 +460,45 @@ async def start_provider_verification(request: VerificationRequest):
                     if rid == request.provider_id:
                         # Extract issues and discrepancies from validation
                         issues = result.get('issues') if isinstance(result, dict) else getattr(result, 'issues', [])
+                        validation_data = {
+                            'issues': [i.get('issue') if isinstance(i, dict) else getattr(i, 'issue', '') for i in issues] if issues else [],
+                            'discrepancies': {},
+                        }
+                        # Check for phone mismatch
+                        input_phone = result.get('input_data', {}).get('phone') if isinstance(result, dict) else result.input_data.get('phone')
+                        verified_phone = result.get('verified_phone') if isinstance(result, dict) else getattr(result, 'verified_phone', None)
+                        if input_phone != verified_phone:
+                            validation_data['discrepancies']['phone'] = {
+                                'old_value': input_phone or '',
+                                'new_value': verified_phone or ''
+                            }
+                        # Check for specialty mismatch
+                        input_spec = result.get('input_data', {}).get('specialty') if isinstance(result, dict) else result.input_data.get('specialty')
+                        verified_spec = result.get('verified_specialty') if isinstance(result, dict) else getattr(result, 'verified_specialty', None)
+                        if input_spec != verified_spec:
+                            validation_data['discrepancies']['specialty'] = {
+                                'old_value': input_spec or '',
+                                'new_value': verified_spec or ''
+                            }
+                        break
+        except Exception as e:
+            print(f"[VERIFY] Could not fetch validation data: {e}")
+        
+        # Merge validation data with request data
+        request_data = {
+            'specialty': request.specialty,
+            'phone': request.phone,
+            'address': request.address,
+            'license_number': request.license_number,
+            'hospital': request.hospital
+        }
+        if validation_data:
+            request_data.update(validation_data)
+        
+        # Pass enriched data to verification service  
+        success, message, session = start_verification(request, request_data)
+        
+        if success:
+            return VerificationResponse(
+                success=True,
+                session_id=session.session_id,
