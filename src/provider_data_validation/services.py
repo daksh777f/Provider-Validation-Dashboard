@@ -243,3 +243,38 @@ class ValidationService:
                 result_str = re.sub(r'```json\s*|\s*```', '', result_str).strip()
                 
                 # Check if result is empty
+                if not result_str:
+                    print("⚠️ Crew returned empty result, falling back to helpers...")
+                    crew_failed = True
+                else:
+                    # Parse the validation data
+                    validation_result = json.loads(result_str)
+                    
+                    # Check if crew found any sources
+                    matched_sources = validation_result.get("identity", {}).get("matched_sources", [])
+                    if not matched_sources:
+                        print(f"⚠️ Crew found 0 sources for {provider.provider_name}, falling back to helpers...")
+                        crew_failed = True
+                    else:
+                        print(f"✅ Crew found {len(matched_sources)} sources: {matched_sources}")
+        except Exception as e:
+            print(f"⚠️ Crew execution failed: {e}")
+            print("   Falling back to helper functions...")
+            crew_failed = True
+        
+        # FALLBACK: Use helper functions (ALWAYS USED NOW)
+        if crew_failed:
+            from .crews.data_validation_crew.data_validation_crew import extract_provider_data, validate_provider_data
+            
+            print(f"🔧 Using helper functions for {provider.provider_name}...")
+            extracted_data = extract_provider_data(provider.provider_name)
+            validation_result = validate_provider_data(extracted_data)
+            print(f"✅ Helper functions completed")
+        
+        # The crew output or helper output is now in validation_result
+        # Extract information from validation_result
+        license_data = validation_result.get("license", {})
+        affiliation_data = validation_result.get("affiliation", {})
+        location_data = validation_result.get("location", {})
+        specialty_data = validation_result.get("specialty", {})
+        
