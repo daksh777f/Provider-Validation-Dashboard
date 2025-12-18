@@ -243,3 +243,108 @@ class ValidationService:
                 result_str = re.sub(r'```json\s*|\s*```', '', result_str).strip()
                 
                 # Check if result is empty
+                if not result_str:
+                    print("⚠️ Crew returned empty result, falling back to helpers...")
+                    crew_failed = True
+                else:
+                    # Parse the validation data
+                    validation_result = json.loads(result_str)
+                    
+                    # Check if crew found any sources
+                    matched_sources = validation_result.get("identity", {}).get("matched_sources", [])
+                    if not matched_sources:
+                        print(f"⚠️ Crew found 0 sources for {provider.provider_name}, falling back to helpers...")
+                        crew_failed = True
+                    else:
+                        print(f"✅ Crew found {len(matched_sources)} sources: {matched_sources}")
+        except Exception as e:
+            print(f"⚠️ Crew execution failed: {e}")
+            print("   Falling back to helper functions...")
+            crew_failed = True
+        
+        # FALLBACK: Use helper functions (ALWAYS USED NOW)
+        if crew_failed:
+            from .crews.data_validation_crew.data_validation_crew import extract_provider_data, validate_provider_data
+            
+            print(f"🔧 Using helper functions for {provider.provider_name}...")
+            extracted_data = extract_provider_data(provider.provider_name)
+            validation_result = validate_provider_data(extracted_data)
+            print(f"✅ Helper functions completed")
+        
+        # The crew output or helper output is now in validation_result
+        # Extract information from validation_result
+        license_data = validation_result.get("license", {})
+        affiliation_data = validation_result.get("affiliation", {})
+        location_data = validation_result.get("location", {})
+        specialty_data = validation_result.get("specialty", {})
+        
+        # Extract verified information from validation output
+        verified_phone = location_data.get("verified_phone")
+        verified_address = location_data.get("verified_address")
+        verified_specialty = specialty_data.get("verified_specialty")
+        
+        # Build confidence scores
+        confidence_scores = ConfidenceScores(
+            identity_match=validation_result.get("identity", {}).get("match_score", 0.0),
+            license_validity=license_data.get("confidence", 0.0),
+            contact_info_accuracy=location_data.get("confidence", 0.0),
+            hospital_affiliation=affiliation_data.get("confidence", 0.0),
+            specialty_verification=specialty_data.get("confidence", 0.0),
+            data_freshness=0.9,  # Mock data is relatively fresh
+            overall_confidence=validation_result.get("overall_validation_confidence", 0.0)
+        )
+        
+        # Build license info
+        license_info = None
+        if license_data.get("license_no"):
+            license_info = LicenseInfo(
+                license_number=license_data.get("license_no"),
+                status=license_data.get("status"),
+                specialty=verified_specialty or specialty_data.get("input_specialty"),
+                expiration_date=license_data.get("valid_till"),
+                issuing_body=license_data.get("issued_by", "")
+            )
+        
+        # Build hospital affiliation
+        hospital_affiliation = None
+        if affiliation_data.get("hospital"):
+            hospital_affiliation = HospitalAffiliation(
+                hospital_name=affiliation_data.get("hospital"),
+                department=affiliation_data.get("department"),
+                position=affiliation_data.get("designation", "")
+            )
+        
+        # Determine validation status
+        match_score = validation_result["identity"]["match_score"]
+        if match_score >= 0.6:
+            validation_status = "VERIFIED"
+        elif match_score >= 0.4:
+            validation_status = "PARTIALLY_VERIFIED"
+        else:
+            validation_status = "UNVERIFIED"
+        
+        # Check for critical issues
+        if license_data and license_data.get("status") != "Active":
+            validation_status = "FLAGGED"
+        
+        # Build issues list
+        issues: List[ValidationIssue] = []
+        for issue_text in validation_result.get("issues", []):
+            severity = "HIGH" if "license" in issue_text.lower() else "MEDIUM"
+            issues.append(ValidationIssue(
+                issue=issue_text,
+                severity=severity,
+                source="validation_crew",
+                recommendation="Review and verify manually"
+            ))
+        
+        processing_time_ms = (time.time() - start_time) * 1000
+        
+        validation_result_obj = ValidationResult(
+            provider_id=provider_id,
+            input_data=provider.model_dump(),
+            provider_name=provider.provider_name,
+            npi_number=None,  # Crew doesn't return NPI directly
+            verified_phone=verified_phone,
+            verified_address=verified_address,
+            verified_specialty=verified_specialty,

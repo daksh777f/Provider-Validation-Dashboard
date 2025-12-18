@@ -418,3 +418,129 @@ async def monitor_drift(provider_name: str):
         # Clean up the string
         # Remove markdown code fences
         result_str = re.sub(r'```json\s*|\s*```', '', result_str)
+        # Replace double curly braces
+        result_str = result_str.replace('{{', '{').replace('}}', '}')
+        # Remove any leading/trailing whitespace
+        result_str = result_str.strip()
+        
+        # Parse as JSON
+        result_data = json.loads(result_str)
+        
+        return {
+            "success": True,
+            "data": result_data
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Drift monitoring failed: {str(e)}")
+
+
+# ==================== Provider Verification ====================
+
+@app.post("/verify/start")
+async def start_provider_verification(request: VerificationRequest):
+    """
+    Start interactive SMS verification for a provider.
+    Intelligently asks only about mismatched/problematic fields.
+    """
+    try:
+        from .tools.verification_service import start_verification
+        from .models import VerificationRequest, VerificationResponse
+        
+        # Try to get validation results for this provider to identify issues
+        validation_data = None
+        try:
+            # Best-effort: load persisted batches if available
+            batches = ValidationService.get_all_results() if hasattr(ValidationService, 'get_all_results') else list(ValidationService.batch_jobs.values())
+            for batch in batches:
+                results = batch.get('results') if isinstance(batch, dict) else getattr(batch, 'results', [])
+                for result in results:
+                    rid = result.get('provider_id') if isinstance(result, dict) else getattr(result, 'provider_id', None)
+                    if rid == request.provider_id:
+                        # Extract issues and discrepancies from validation
+                        issues = result.get('issues') if isinstance(result, dict) else getattr(result, 'issues', [])
+                        validation_data = {
+                            'issues': [i.get('issue') if isinstance(i, dict) else getattr(i, 'issue', '') for i in issues] if issues else [],
+                            'discrepancies': {},
+                        }
+                        # Check for phone mismatch
+                        input_phone = result.get('input_data', {}).get('phone') if isinstance(result, dict) else result.input_data.get('phone')
+                        verified_phone = result.get('verified_phone') if isinstance(result, dict) else getattr(result, 'verified_phone', None)
+                        if input_phone != verified_phone:
+                            validation_data['discrepancies']['phone'] = {
+                                'old_value': input_phone or '',
+                                'new_value': verified_phone or ''
+                            }
+                        # Check for specialty mismatch
+                        input_spec = result.get('input_data', {}).get('specialty') if isinstance(result, dict) else result.input_data.get('specialty')
+                        verified_spec = result.get('verified_specialty') if isinstance(result, dict) else getattr(result, 'verified_specialty', None)
+                        if input_spec != verified_spec:
+                            validation_data['discrepancies']['specialty'] = {
+                                'old_value': input_spec or '',
+                                'new_value': verified_spec or ''
+                            }
+                        break
+        except Exception as e:
+            print(f"[VERIFY] Could not fetch validation data: {e}")
+        
+        # Merge validation data with request data
+        request_data = {
+            'specialty': request.specialty,
+            'phone': request.phone,
+            'address': request.address,
+            'license_number': request.license_number,
+            'hospital': request.hospital
+        }
+        if validation_data:
+            request_data.update(validation_data)
+        
+        # Pass enriched data to verification service  
+        success, message, session = start_verification(request, request_data)
+        
+        if success:
+            return VerificationResponse(
+                success=True,
+                session_id=session.session_id,
+                status=session.status,
+                message=message
+            )
+        else:
+            return VerificationResponse(
+                success=False,
+                session_id=session.session_id if session else None,
+                status=session.status if session else None,
+                message=message,
+                error=message
+            )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
+
+
+@app.post("/verify/webhook")
+async def verification_sms_webhook(request: Request):
+    """
+    Twilio webhook endpoint for incoming SMS responses.
+    Configure this URL in your Twilio console.
+    """
+    try:
+        from .tools.verification_service import process_sms_response
+        
+        # Parse form data from Twilio webhook
+        form_data = await request.form()
+        from_phone = form_data.get("From", "")
+        message_body = form_data.get("Body", "")
+
+        # If Twilio auth token is configured, validate signature
+        try:
+            signature = request.headers.get('X-Twilio-Signature') or request.headers.get('x-twilio-signature')
+            if settings.TWILIO_AUTH_TOKEN and signature:
+                from twilio.request_validator import RequestValidator
+                validator = RequestValidator(settings.TWILIO_AUTH_TOKEN)
+                # FastAPI request.url contains the full URL
+                valid = validator.validate(str(request.url), dict(form_data), signature)
+                if not valid:
+                    raise HTTPException(status_code=403, detail="Invalid Twilio signature")
+        except HTTPException:

@@ -438,3 +438,203 @@ const ProviderDetail = () => {
                                         <span className="text-xs px-2 py-0.5 bg-white/10 rounded">{issue.severity}</span>
                                     </div>
                                 </div>
+                            );
+                        })}
+
+                        {/* Risk Flags */}
+                        {provider.riskFlags?.map((flag, idx) => {
+                            const severityColors = {
+                                'CRITICAL': 'bg-red-500/20 border-red-500/50 text-red-300',
+                                'HIGH': 'bg-orange-500/20 border-orange-500/50 text-orange-300',
+                                'MEDIUM': 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300',
+                                'LOW': 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                            };
+                            return (
+                                <div key={idx} className={`p-3 rounded-lg border ${severityColors[flag.severity] || severityColors['LOW']}`}>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1">
+                                            <p className="font-medium">{flag.flag}</p>
+                                            {flag.description && <p className="text-sm mt-1">{flag.description}</p>}
+                                        </div>
+                                        <span className="text-xs px-2 py-0.5 bg-white/10 rounded">{flag.severity}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* SMS Verification Section */}
+            <div className="glass-panel p-6 rounded-2xl mb-8">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <MessageSquare size={20} />
+                        SMS Verification
+                    </h3>
+                    <button
+                        onClick={handleStartVerification}
+                        disabled={verificationLoading || !provider.phone || provider.phone === 'N/A'}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                    >
+                        <Send size={16} />
+                        {verificationLoading ? 'Sending...' : 'Send Verification SMS'}
+                    </button>
+                </div>
+
+                {/* Conversation Display */}
+                {conversation.length > 0 && (
+                    <div className="mb-4 p-4 bg-slate-900/50 rounded-xl border border-purple-500/20 max-h-96 overflow-y-auto">
+                        <h4 className="text-sm font-semibold text-purple-300 mb-3">Conversation</h4>
+                        <div className="space-y-2">
+                            {conversation.map((msg, idx) => {
+                                const isSystem = (msg.sender === 'system' || msg.from === 'system');
+                                return (
+                                    <div key={idx} className={`p-2 rounded ${isSystem ? 'bg-blue-500/10 text-blue-200' : 'bg-green-500/10 text-green-200'}`}>
+                                        <p className="text-xs text-slate-400 mb-1">{isSystem ? 'AI Agent' : 'Provider'}</p>
+                                        <p className="text-sm">{msg.message}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* Current Session Status */}
+                {currentSession && (
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/10 mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-slate-500">Status</span>
+                            <span className={`text-xs px-2 py-1 rounded ${currentSession.status === 'CONFIRMED' ? 'bg-green-500/20 text-green-400' :
+                                currentSession.status === 'COMPLETED' ? 'bg-blue-500/20 text-blue-400' :
+                                    currentSession.status === 'PENDING_RESPONSE' ? 'bg-yellow-500/20 text-yellow-400' :
+                                        'bg-gray-500/20 text-gray-400'
+                                }`}>
+                                {currentSession.status.replace(/_/g, ' ')}
+                            </span>
+                        </div>
+                        {currentSession.initial_response && (
+                            <p className="text-sm text-slate-300">Response: {currentSession.initial_response}</p>
+                        )}
+                        {currentSession.correction_text && (
+                            <p className="text-xs text-slate-400 mt-2">Corrections: {currentSession.correction_text}</p>
+                        )}
+                    </div>
+                )}
+
+                {/* Verification History */}
+                {verificationHistory.length > 0 && (
+                    <div className="mt-4">
+                        <h4 className="text-sm font-semibold text-slate-300 mb-3">Verification History</h4>
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {verificationHistory.map((session, idx) => (
+                                <div key={idx} className="p-3 bg-white/5 rounded-lg border border-white/10">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs text-slate-400">
+                                            {new Date(session.created_at).toLocaleString()}
+                                        </span>
+                                        <span className={`text-xs px-2 py-0.5 rounded ${session.status === 'CONFIRMED' ? 'bg-green-500/20 text-green-400' :
+                                            session.status === 'COMPLETED' ? 'bg-blue-500/20 text-blue-400' :
+                                                session.status === 'PENDING_RESPONSE' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                    'bg-gray-500/20 text-gray-400'
+                                            }`}>
+                                            {session.status.replace(/_/g, ' ')}
+                                        </span>
+                                    </div>
+                                    {session.initial_response && (
+                                        <p className="text-sm text-slate-300">Response: {session.initial_response}</p>
+                                    )}
+                                    {session.correction_text && (
+                                        <p className="text-xs text-slate-400 mt-1">Corrections: {session.correction_text.substring(0, 100)}{session.correction_text.length > 100 ? '...' : ''}</p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {verificationHistory.length === 0 && !currentSession && (
+                    <p className="text-sm text-slate-400 text-center py-4">No verification history. Click the button above to send a verification SMS.</p>
+                )}
+            </div>
+
+            {/* Call Verification Section - Separate Block */}
+            <div className="glass-panel p-6 rounded-2xl mb-8 border-2 border-purple-500/30">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2 text-purple-400">
+                        <PhoneCall size={20} />
+                        Call Verification
+                    </h3>
+                    <button
+                        onClick={() => {
+                            setCallPollingEnabled(true);
+                            alert('Call verification webhook is now active!\n\nWebhook URL:\n' +
+                                window.location.origin.replace('5173', '8000') + '/verify/omni-webhook\n\n' +
+                                'Initiate the call through Omni Dimension dashboard.\nData will appear here automatically when received.');
+                        }}
+                        disabled={!provider.phone || provider.phone === 'N/A'}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                    >
+                        <PhoneCall size={16} />
+                        Start Call Verification
+                    </button>
+                </div>
+
+                {callLoading && (
+                    <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30 mb-4">
+                        <p className="text-sm text-purple-300">Waiting for call webhook data...</p>
+                        <p className="text-xs text-slate-400 mt-1">Polling every 10 seconds</p>
+                    </div>
+                )}
+
+                {!callVerification && !callLoading && (
+                    <div className="p-4 bg-slate-900/50 rounded-xl border border-white/10">
+                        <p className="text-sm text-slate-400 text-center">
+                            No call verification data yet. Click "Start Call Verification" to begin.
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* Call Verification Data Display - Only when webhook data exists */}
+            {callVerification && (
+                <div className="glass-panel p-6 rounded-2xl mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <PhoneCall size={20} />
+                            Call Verification
+                        </h3>
+                        <div className="flex items-center gap-2">
+                            <span className={`text-xs px-3 py-1 rounded-full ${callVerification.status === 'completed'
+                                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                                }`}>
+                                {callVerification.status.toUpperCase()}
+                            </span>
+                            <span className="text-xs text-slate-400">
+                                Duration: {callVerification.duration}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Call Summary */}
+                    <div className="mb-6 p-4 bg-blue-500/10 rounded-xl border border-blue-500/30">
+                        <h4 className="text-sm font-semibold text-blue-300 mb-2 flex items-center gap-2">
+                            Call Summary
+                        </h4>
+                        <p className="text-sm text-slate-300 leading-relaxed">
+                            {callVerification.callSummary}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-2">
+                            Call ID: {callVerification.callId} • {new Date(callVerification.timestamp).toLocaleString()}
+                        </p>
+                    </div>
+
+                    {/* Full Conversation Transcript */}
+                    <div className="mb-6 p-4 bg-slate-900/50 rounded-xl border border-purple-500/20 max-h-80 overflow-y-auto">
+                        <h4 className="text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
+                            Full Conversation
+                        </h4>
+                        <div className="space-y-2">
+                            {callVerification.fullConversation.map((msg, idx) => (
+                                <div key={idx} className="flex gap-3">
