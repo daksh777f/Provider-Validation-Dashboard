@@ -478,3 +478,43 @@ const ProviderDetail = () => {
                         className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                     >
                         <Send size={16} />
+                        {verificationLoading ? 'Sending...' : 'Send Verification SMS'}
+                    </button>
+                </div>
+
+                {/* Conversation Display */}
+                {conversation.length > 0 && (
+                    <div className="mb-4 p-4 bg-slate-900/50 rounded-xl border border-purple-500/20 max-h-96 overflow-y-auto">
+                        <h4 className="text-sm font-semibold text-purple-300 mb-3">Conversation</h4>
+                        <div className="space-y-2">
+                            {conversation.map((msg, idx) => {
+                                const isSystem = (msg.sender === 'system' || msg.from === 'system');
+                                return (
+                                    <div key={idx} className={`p-2 rounded ${isSystem ? 'bg-blue-500/10 text-blue-200' : 'bg-green-500/10 text-green-200'}`}>
+                                        <p className="text-xs text-slate-400 mb-1">{isSystem ? 'AI Agent' : 'Provider'}</p>
+                                        <p className="text-sm">{msg.message}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* Current Session Status */}
+                {currentSession && (
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/10 mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-slate-500">Status</span>
+                            <span className={`text-xs px-2 py-1 rounded ${currentSession.status === 'CONFIRMED' ? 'bg-green-500/20 text-green-400' :
+                                currentSession.status === 'COMPLETED' ? 'bg-blue-500/20 text-blue-400' :
+                                    currentSession.status === 'PENDING_RESPONSE' ? 'bg-yellow-500/20 text-yellow-400' :
+                                        'bg-gray-500/20 text-gray-400'
+                                }`}>
+                                {currentSession.status.replace(/_/g, ' ')}
+                            </span>
+                        </div>
+                        {currentSession.initial_response && (
+                            <p className="text-sm text-slate-300">Response: {currentSession.initial_response}</p>
+                        )}
+                        {currentSession.correction_text && (
+                            <p className="text-xs text-slate-400 mt-2">Corrections: {currentSession.correction_text}</p>
