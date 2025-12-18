@@ -278,3 +278,38 @@ class ValidationService:
         location_data = validation_result.get("location", {})
         specialty_data = validation_result.get("specialty", {})
         
+        # Extract verified information from validation output
+        verified_phone = location_data.get("verified_phone")
+        verified_address = location_data.get("verified_address")
+        verified_specialty = specialty_data.get("verified_specialty")
+        
+        # Build confidence scores
+        confidence_scores = ConfidenceScores(
+            identity_match=validation_result.get("identity", {}).get("match_score", 0.0),
+            license_validity=license_data.get("confidence", 0.0),
+            contact_info_accuracy=location_data.get("confidence", 0.0),
+            hospital_affiliation=affiliation_data.get("confidence", 0.0),
+            specialty_verification=specialty_data.get("confidence", 0.0),
+            data_freshness=0.9,  # Mock data is relatively fresh
+            overall_confidence=validation_result.get("overall_validation_confidence", 0.0)
+        )
+        
+        # Build license info
+        license_info = None
+        if license_data.get("license_no"):
+            license_info = LicenseInfo(
+                license_number=license_data.get("license_no"),
+                status=license_data.get("status"),
+                specialty=verified_specialty or specialty_data.get("input_specialty"),
+                expiration_date=license_data.get("valid_till"),
+                issuing_body=license_data.get("issued_by", "")
+            )
+        
+        # Build hospital affiliation
+        hospital_affiliation = None
+        if affiliation_data.get("hospital"):
+            hospital_affiliation = HospitalAffiliation(
+                hospital_name=affiliation_data.get("hospital"),
+                department=affiliation_data.get("department"),
+                position=affiliation_data.get("designation", "")
+            )
