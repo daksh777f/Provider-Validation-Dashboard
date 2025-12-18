@@ -313,3 +313,38 @@ class ValidationService:
                 department=affiliation_data.get("department"),
                 position=affiliation_data.get("designation", "")
             )
+        
+        # Determine validation status
+        match_score = validation_result["identity"]["match_score"]
+        if match_score >= 0.6:
+            validation_status = "VERIFIED"
+        elif match_score >= 0.4:
+            validation_status = "PARTIALLY_VERIFIED"
+        else:
+            validation_status = "UNVERIFIED"
+        
+        # Check for critical issues
+        if license_data and license_data.get("status") != "Active":
+            validation_status = "FLAGGED"
+        
+        # Build issues list
+        issues: List[ValidationIssue] = []
+        for issue_text in validation_result.get("issues", []):
+            severity = "HIGH" if "license" in issue_text.lower() else "MEDIUM"
+            issues.append(ValidationIssue(
+                issue=issue_text,
+                severity=severity,
+                source="validation_crew",
+                recommendation="Review and verify manually"
+            ))
+        
+        processing_time_ms = (time.time() - start_time) * 1000
+        
+        validation_result_obj = ValidationResult(
+            provider_id=provider_id,
+            input_data=provider.model_dump(),
+            provider_name=provider.provider_name,
+            npi_number=None,  # Crew doesn't return NPI directly
+            verified_phone=verified_phone,
+            verified_address=verified_address,
+            verified_specialty=verified_specialty,
