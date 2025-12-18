@@ -518,3 +518,43 @@ const ProviderDetail = () => {
                         )}
                         {currentSession.correction_text && (
                             <p className="text-xs text-slate-400 mt-2">Corrections: {currentSession.correction_text}</p>
+                        )}
+                    </div>
+                )}
+
+                {/* Verification History */}
+                {verificationHistory.length > 0 && (
+                    <div className="mt-4">
+                        <h4 className="text-sm font-semibold text-slate-300 mb-3">Verification History</h4>
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {verificationHistory.map((session, idx) => (
+                                <div key={idx} className="p-3 bg-white/5 rounded-lg border border-white/10">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs text-slate-400">
+                                            {new Date(session.created_at).toLocaleString()}
+                                        </span>
+                                        <span className={`text-xs px-2 py-0.5 rounded ${session.status === 'CONFIRMED' ? 'bg-green-500/20 text-green-400' :
+                                            session.status === 'COMPLETED' ? 'bg-blue-500/20 text-blue-400' :
+                                                session.status === 'PENDING_RESPONSE' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                    'bg-gray-500/20 text-gray-400'
+                                            }`}>
+                                            {session.status.replace(/_/g, ' ')}
+                                        </span>
+                                    </div>
+                                    {session.initial_response && (
+                                        <p className="text-sm text-slate-300">Response: {session.initial_response}</p>
+                                    )}
+                                    {session.correction_text && (
+                                        <p className="text-xs text-slate-400 mt-1">Corrections: {session.correction_text.substring(0, 100)}{session.correction_text.length > 100 ? '...' : ''}</p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {verificationHistory.length === 0 && !currentSession && (
+                    <p className="text-sm text-slate-400 text-center py-4">No verification history. Click the button above to send a verification SMS.</p>
+                )}
+            </div>
+
