@@ -438,3 +438,43 @@ const ProviderDetail = () => {
                                         <span className="text-xs px-2 py-0.5 bg-white/10 rounded">{issue.severity}</span>
                                     </div>
                                 </div>
+                            );
+                        })}
+
+                        {/* Risk Flags */}
+                        {provider.riskFlags?.map((flag, idx) => {
+                            const severityColors = {
+                                'CRITICAL': 'bg-red-500/20 border-red-500/50 text-red-300',
+                                'HIGH': 'bg-orange-500/20 border-orange-500/50 text-orange-300',
+                                'MEDIUM': 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300',
+                                'LOW': 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                            };
+                            return (
+                                <div key={idx} className={`p-3 rounded-lg border ${severityColors[flag.severity] || severityColors['LOW']}`}>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1">
+                                            <p className="font-medium">{flag.flag}</p>
+                                            {flag.description && <p className="text-sm mt-1">{flag.description}</p>}
+                                        </div>
+                                        <span className="text-xs px-2 py-0.5 bg-white/10 rounded">{flag.severity}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* SMS Verification Section */}
+            <div className="glass-panel p-6 rounded-2xl mb-8">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <MessageSquare size={20} />
+                        SMS Verification
+                    </h3>
+                    <button
+                        onClick={handleStartVerification}
+                        disabled={verificationLoading || !provider.phone || provider.phone === 'N/A'}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                    >
+                        <Send size={16} />
