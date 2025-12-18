@@ -598,3 +598,43 @@ const ProviderDetail = () => {
 
             {/* Call Verification Data Display - Only when webhook data exists */}
             {callVerification && (
+                <div className="glass-panel p-6 rounded-2xl mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <PhoneCall size={20} />
+                            Call Verification
+                        </h3>
+                        <div className="flex items-center gap-2">
+                            <span className={`text-xs px-3 py-1 rounded-full ${callVerification.status === 'completed'
+                                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                                }`}>
+                                {callVerification.status.toUpperCase()}
+                            </span>
+                            <span className="text-xs text-slate-400">
+                                Duration: {callVerification.duration}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Call Summary */}
+                    <div className="mb-6 p-4 bg-blue-500/10 rounded-xl border border-blue-500/30">
+                        <h4 className="text-sm font-semibold text-blue-300 mb-2 flex items-center gap-2">
+                            Call Summary
+                        </h4>
+                        <p className="text-sm text-slate-300 leading-relaxed">
+                            {callVerification.callSummary}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-2">
+                            Call ID: {callVerification.callId} • {new Date(callVerification.timestamp).toLocaleString()}
+                        </p>
+                    </div>
+
+                    {/* Full Conversation Transcript */}
+                    <div className="mb-6 p-4 bg-slate-900/50 rounded-xl border border-purple-500/20 max-h-80 overflow-y-auto">
+                        <h4 className="text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
+                            Full Conversation
+                        </h4>
+                        <div className="space-y-2">
+                            {callVerification.fullConversation.map((msg, idx) => (
+                                <div key={idx} className="flex gap-3">
