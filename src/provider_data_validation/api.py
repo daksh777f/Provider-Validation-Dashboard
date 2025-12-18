@@ -418,3 +418,45 @@ async def monitor_drift(provider_name: str):
         # Clean up the string
         # Remove markdown code fences
         result_str = re.sub(r'```json\s*|\s*```', '', result_str)
+        # Replace double curly braces
+        result_str = result_str.replace('{{', '{').replace('}}', '}')
+        # Remove any leading/trailing whitespace
+        result_str = result_str.strip()
+        
+        # Parse as JSON
+        result_data = json.loads(result_str)
+        
+        return {
+            "success": True,
+            "data": result_data
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Drift monitoring failed: {str(e)}")
+
+
+# ==================== Provider Verification ====================
+
+@app.post("/verify/start")
+async def start_provider_verification(request: VerificationRequest):
+    """
+    Start interactive SMS verification for a provider.
+    Intelligently asks only about mismatched/problematic fields.
+    """
+    try:
+        from .tools.verification_service import start_verification
+        from .models import VerificationRequest, VerificationResponse
+        
+        # Try to get validation results for this provider to identify issues
+        validation_data = None
+        try:
+            # Best-effort: load persisted batches if available
+            batches = ValidationService.get_all_results() if hasattr(ValidationService, 'get_all_results') else list(ValidationService.batch_jobs.values())
+            for batch in batches:
+                results = batch.get('results') if isinstance(batch, dict) else getattr(batch, 'results', [])
+                for result in results:
+                    rid = result.get('provider_id') if isinstance(result, dict) else getattr(result, 'provider_id', None)
+                    if rid == request.provider_id:
+                        # Extract issues and discrepancies from validation
+                        issues = result.get('issues') if isinstance(result, dict) else getattr(result, 'issues', [])
