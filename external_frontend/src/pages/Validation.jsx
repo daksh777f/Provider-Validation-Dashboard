@@ -385,3 +385,48 @@ const Validation = () => {
                                                 )}
                                                 {result.verified_address && (
                                                     <div className="text-xs text-slate-400 mt-1">{result.verified_address}</div>
+                                                )}
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-20 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full rounded-full ${result.confidence_scores.overall_confidence > 0.8 ? 'bg-green-500' :
+                                                                result.confidence_scores.overall_confidence > 0.6 ? 'bg-yellow-500' :
+                                                                    'bg-red-500'
+                                                                }`}
+                                                            style={{ width: `${result.confidence_scores.overall_confidence * 100}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-white">
+                                                        {Math.round(result.confidence_scores.overall_confidence * 100)}%
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="p-4">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(result.validation_status)}`}>
+                                                    {result.validation_status}
+                                                </span>
+                                            </td>
+                                            <td className="p-4">
+                                                {result.issues && result.issues.length > 0 ? (
+                                                    <div className="text-sm text-slate-400">
+                                                        {result.issues.length} issue{result.issues.length > 1 ? 's' : ''}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-sm text-green-400">No issues</div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default Validation;
