@@ -153,3 +153,34 @@ def start_verification(request: VerificationRequest, enriched_data: Dict[str, An
     
     # Format and send initial SMS (will be smart if enriched_data has issues/discrepancies)
     sms_message = format_verification_sms(request.provider_name, data_for_sms)
+    sms_sid = send_verification_sms(request.phone, sms_message)
+    
+    if not sms_sid:
+        session.status = VerificationStatus.FAILED
+        verification_store.update_session(session)
+        return False, "Failed to send verification SMS", session
+    
+    # Update session with SMS info
+    session.sms_sid = sms_sid
+    session.sms_count = 1
+    verification_store.update_session(session)
+    
+    return True, "Verification SMS sent successfully", session
+
+
+def process_sms_response(from_phone: str, message_body: str) -> tuple[bool, str]:
+    """
+    Process incoming SMS response.
+    Returns (success, reply_message).
+    """
+    print(f"\n[WEBHOOK] Processing SMS response")
+    print(f"[WEBHOOK] From: {from_phone}")
+    print(f"[WEBHOOK] Message: {message_body[:100]}")
+    
+    # Find active session for this phone
+    session = _ensure_session_model(verification_store.get_session_by_phone(from_phone))
+
+    if not session:
+        print(f"[WEBHOOK] ERROR: No active session found for {from_phone}")
+        print(f"[WEBHOOK] Checking all sessions...")
+        all_sessions = verification_store.get_all_sessions()
