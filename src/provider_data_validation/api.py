@@ -544,3 +544,45 @@ async def verification_sms_webhook(request: Request):
                 if not valid:
                     raise HTTPException(status_code=403, detail="Invalid Twilio signature")
         except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"Twilio signature validation skipped/failed: {e}")
+
+        if not from_phone or not message_body:
+            raise HTTPException(status_code=400, detail="Missing From or Body in webhook")
+
+        # Process the response
+        success, message = process_sms_response(from_phone, message_body)
+        
+        # Return TwiML response (Twilio expects XML)
+        from fastapi.responses import Response
+        return Response(
+            content=f"<?xml version='1.0' encoding='UTF-8'?><Response></Response>",
+            media_type="application/xml"
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        # Still return valid TwiML even on error
+        from fastapi.responses import Response
+        return Response(
+            content=f"<?xml version='1.0' encoding='UTF-8'?><Response></Response>",
+            media_type="application/xml"
+        )
+
+
+@app.get("/verify/{session_id}")
+async def get_verification_status(session_id: str):
+    """
+    Get the status of a verification session.
+    """
+    from .tools import verification_store
+    
+    session = verification_store.get_session(session_id)
+    
+    if not session:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+    
+    return session
+
+
