@@ -153,3 +153,65 @@ def start_verification(request: VerificationRequest, enriched_data: Dict[str, An
     
     # Format and send initial SMS (will be smart if enriched_data has issues/discrepancies)
     sms_message = format_verification_sms(request.provider_name, data_for_sms)
+    sms_sid = send_verification_sms(request.phone, sms_message)
+    
+    if not sms_sid:
+        session.status = VerificationStatus.FAILED
+        verification_store.update_session(session)
+        return False, "Failed to send verification SMS", session
+    
+    # Update session with SMS info
+    session.sms_sid = sms_sid
+    session.sms_count = 1
+    verification_store.update_session(session)
+    
+    return True, "Verification SMS sent successfully", session
+
+
+def process_sms_response(from_phone: str, message_body: str) -> tuple[bool, str]:
+    """
+    Process incoming SMS response.
+    Returns (success, reply_message).
+    """
+    print(f"\n[WEBHOOK] Processing SMS response")
+    print(f"[WEBHOOK] From: {from_phone}")
+    print(f"[WEBHOOK] Message: {message_body[:100]}")
+    
+    # Find active session for this phone
+    session = _ensure_session_model(verification_store.get_session_by_phone(from_phone))
+
+    if not session:
+        print(f"[WEBHOOK] ERROR: No active session found for {from_phone}")
+        print(f"[WEBHOOK] Checking all sessions...")
+        all_sessions = verification_store.get_all_sessions()
+        print(f"[WEBHOOK] Total sessions in store: {len(all_sessions)}")
+        for s in all_sessions:
+            print(f"[WEBHOOK]   Session {s.session_id[:8]}... - Phone: {s.phone} - Status: {s.status}")
+        return False, "No active verification found for this number."
+    
+    print(f"[WEBHOOK] Found session: {session.session_id}")
+    print(f"[WEBHOOK] Current status: {session.status}")
+    
+    if not session:
+        return False, "No active verification found for this number."
+    
+    # Normalize message
+    message_body = message_body.strip().upper()
+    
+    # Handle based on current status
+    if session.status == VerificationStatus.PENDING_RESPONSE:
+        # Awaiting YES/NO
+        if "YES" in message_body or "Y" == message_body:
+            # Confirmed
+            session.initial_response = "YES"
+            session.status = VerificationStatus.CONFIRMED
+            session.responded_at = datetime.utcnow()
+            session.completed_at = datetime.utcnow()
+            verification_store.update_session(session)
+            
+            reply = f"Thank you for confirming, {session.provider_name}! Your information is verified."
+            send_verification_sms(from_phone, reply)
+            return True, "Verification confirmed"
+            
+        elif "NO" in message_body or "N" == message_body:
+            # Needs corrections
