@@ -638,3 +638,43 @@ const ProviderDetail = () => {
                         <div className="space-y-2">
                             {callVerification.fullConversation.map((msg, idx) => (
                                 <div key={idx} className="flex gap-3">
+                                    <span className="text-xs text-slate-500 w-12 flex-shrink-0">{msg.time}</span>
+                                    <div className="flex-1">
+                                        <span className={`text-xs font-semibold ${msg.sender === 'system' ? 'text-blue-400' : 'text-green-400'}`}>
+                                            {msg.sender === 'system' ? 'AI Agent' : 'Provider'}:
+                                        </span>
+                                        <p className="text-sm text-slate-300 mt-0.5">{msg.message}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Sentiment Analysis */}
+                    <div className="mb-6 p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
+                        <h4 className="text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
+                            Sentiment Analysis
+                        </h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-xs text-slate-500 mb-1">Overall Sentiment</p>
+                                <p className="text-lg font-bold text-green-400">{callVerification.sentimentAnalysis.overall}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-slate-500 mb-1">Confidence</p>
+                                <p className="text-lg font-bold text-blue-400">{callVerification.sentimentAnalysis.confidence}%</p>
+                            </div>
+                            <div className="col-span-2">
+                                <p className="text-xs text-slate-500 mb-1">Mood</p>
+                                <p className="text-sm text-slate-300">{callVerification.sentimentAnalysis.mood}</p>
+                            </div>
+                            <div className="col-span-2">
+                                <p className="text-xs text-slate-500 mb-1">Key Emotions</p>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                    {callVerification.sentimentAnalysis.keyEmotions.map((emotion, idx) => (
+                                        <span key={idx} className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">
+                                            {emotion}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
