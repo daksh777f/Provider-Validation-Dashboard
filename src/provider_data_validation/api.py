@@ -628,3 +628,45 @@ async def omni_dimension_webhook(request: Request):
             # Call Summary
             "callSummary": data.get("call_summary") or data.get("summary"),
             
+            # Full Conversation
+            "fullConversation": data.get("full_conversation") or data.get("conversation", []),
+            
+            # Sentiment Analysis
+            "sentimentAnalysis": {
+                "overall": data.get("sentiment", {}).get("overall", "Positive"),
+                "confidence": data.get("sentiment", {}).get("confidence", 85),
+                "mood": data.get("sentiment", {}).get("mood", "Cooperative"),
+                "keyEmotions": data.get("sentiment", {}).get("emotions", [])
+            },
+            
+            # Extracted Information
+            "extractedInformation": data.get("extracted_info") or data.get("extracted_information", {})
+        }
+        
+        # Store in verification_store
+        from .tools import verification_store
+        
+        # Find provider by phone number
+        provider_phone = call_data["provider_phone"]
+        provider_id = data.get("provider_id") or data.get("metadata", {}).get("provider_id")
+        
+        # Try to find existing session by provider_id or phone
+        session_id = data.get("session_id")
+        existing_session = None
+        
+        if not session_id:
+            # Search for existing session by phone or provider_id
+            all_sessions = verification_store.get_all_sessions()
+            for sid, sess in all_sessions.items():
+                sess_phone = sess.get("phone", "")
+                sess_provider = sess.get("provider_id", "")
+
+                if provider_phone and provider_phone in sess_phone:
+                    existing_session = sess
+                    session_id = sid
+                    print(f"[INFO] Found existing session by phone: {session_id}")
+                    break
+                elif provider_id and provider_id in sess_provider:
+                    existing_session = sess
+                    session_id = sid
+                    print(f"[INFO] Found existing session by provider_id: {session_id}")
