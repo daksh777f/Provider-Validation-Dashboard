@@ -586,3 +586,45 @@ async def get_verification_status(session_id: str):
     return session
 
 
+@app.get("/provider/{provider_id}/verifications")
+async def get_provider_verifications(provider_id: str):
+    """
+    Get all verification sessions for a provider.
+    """
+    from .tools import verification_store
+    
+    sessions = verification_store.get_provider_sessions(provider_id)
+    
+    return {
+        "provider_id": provider_id,
+        "total_verifications": len(sessions),
+        "sessions": sessions
+    }
+
+
+@app.post("/verify/omni-webhook")
+async def omni_dimension_webhook(request: Request):
+    """
+    Receive call verification data from Omni Dimension.
+    This webhook is called after each verification call completes.
+    
+    Configure this URL in Omni Dimension:
+    https://your-ngrok-url.ngrok.io/verify/omni-webhook
+    """
+    try:
+        # Parse incoming webhook data from Omni Dimension
+        data = await request.json()
+        
+        print(f"\n[WEBHOOK] Received Omni Dimension webhook: {data.get('call_id')}")
+        
+        # Extract call information
+        call_data = {
+            "call_id": data.get("call_id"),
+            "status": data.get("status", "completed"),
+            "duration": data.get("duration"),
+            "timestamp": data.get("timestamp"),
+            "provider_phone": data.get("phone") or data.get("to"),
+            
+            # Call Summary
+            "callSummary": data.get("call_summary") or data.get("summary"),
+            
