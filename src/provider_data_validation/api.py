@@ -670,3 +670,45 @@ async def omni_dimension_webhook(request: Request):
                     existing_session = sess
                     session_id = sid
                     print(f"[INFO] Found existing session by provider_id: {session_id}")
+                    break
+        
+        # Update existing session or create new one
+        if existing_session:
+            # Update existing session
+            existing_session["call_verification"] = call_data
+            existing_session["status"] = "COMPLETED"
+            # verification_store.update_session accepts a session dict or model
+            verification_store.update_session(existing_session)
+            print(f"[SUCCESS] Updated existing session {session_id} with call data")
+        else:
+            # Create new session directly as a dict
+            import uuid
+            from datetime import datetime
+            
+            session_id = str(uuid.uuid4())
+            simple_session = {
+                "session_id": session_id,
+                "provider_id": provider_id or provider_phone or "unknown",
+                "provider_name": data.get("provider_name", "Unknown Provider"),
+                "phone": provider_phone or "N/A",
+                "status": "COMPLETED",
+                "created_at": datetime.utcnow().isoformat(),
+                "call_verification": call_data
+            }
+            
+            # Store using verification_store API
+            verification_store.create_session(simple_session)
+            
+            print(f"[SUCCESS] Created new session {session_id} with call data")
+        
+        return {
+            "success": True,
+            "message": "Call data received and stored",
+            "session_id": session_id,
+            "call_id": call_data["call_id"]
+        }
+        
+    except Exception as e:
+        print(f"[ERROR] Error processing Omni webhook: {e}")
+        import traceback
+        traceback.print_exc()
