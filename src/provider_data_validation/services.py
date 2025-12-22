@@ -453,3 +453,39 @@ class ValidationService:
 
     @classmethod
     def get_batch_count(cls) -> int:
+        """Return number of persisted batch jobs (best-effort)."""
+        try:
+            if _redis_client:
+                keys = _redis_client.keys("batch:*")
+                return len(keys)
+            return len(cls.batch_jobs)
+        except Exception:
+            return len(cls.batch_jobs)
+
+    @classmethod
+    def get_all_results(cls) -> List[Dict[str, Any]]:
+        """Return all batch results (best-effort)."""
+        out = []
+        try:
+            if _redis_client:
+                keys = _redis_client.keys("batch:*")
+                for k in keys:
+                    raw = _redis_client.get(k)
+                    if raw:
+                        out.append(json.loads(raw))
+                return out
+            for b in cls.batch_jobs.values():
+                out.append(b.model_dump() if hasattr(b, 'model_dump') else b.__dict__)
+        except Exception as e:
+            logger.warning(f"Failed to list batches: {e}")
+        return out
+    
+    @classmethod
+    def recalculate_provider_compliance(cls, provider_id: str, provider_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Recalculate compliance for a single provider."""
+        return calculate_cri(provider_data)
+    
+    @classmethod
+    def get_provider_compliance_status(cls, provider_id: str) -> Optional[Dict[str, Any]]:
+        """Get stored compliance status for a provider."""
+        return get_provider_compliance(provider_id)
