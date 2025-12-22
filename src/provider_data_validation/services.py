@@ -348,3 +348,144 @@ class ValidationService:
             verified_phone=verified_phone,
             verified_address=verified_address,
             verified_specialty=verified_specialty,
+            license_info=license_info,
+            hospital_affiliation=hospital_affiliation,
+            confidence_scores=confidence_scores,
+            sources_checked=["npi", "license", "hospital", "maps", "clinic"],
+            sources_matched=validation_result.get("identity", {}).get("matched_sources", []),
+            validation_status=validation_status,
+            issues=issues,
+            risk_flags=[],
+            requires_manual_review=validation_status == "FLAGGED",
+            requires_contact_verification=validation_result.get("requires_contact_verification", False),
+            next_steps=[],
+            processing_time_ms=processing_time_ms
+        )
+        
+        # Auto-calculate compliance after validation
+        try:
+            provider_data = {
+                "id": provider_id,
+                "full_name": provider.provider_name,
+                "npi": provider.npi_number if provider.npi_number else "",
+                "license": provider.license_no if provider.license_no else (license_info.license_number if license_info else ""),
+                "board_certified": False,  # Not in ProviderInput model
+                "updated_at": datetime.utcnow().isoformat()
+            }
+            calculate_cri(provider_data, validation_result_obj.model_dump() if hasattr(validation_result_obj, 'model_dump') else validation_result_obj.__dict__)
+        except Exception as e:
+            logger.warning(f"Failed to auto-calculate compliance for {provider_id}: {e}")
+        
+        return validation_result_obj
+
+    @classmethod
+    async def validate_batch(cls, providers: List[ProviderInput], batch_id: str) -> BatchValidationResponse:
+        """
+        Validate multiple providers asynchronously.
+        Returns batch response with all results.
+        """
+        # If Celery is enabled, enqueue a background worker job and return queued response.
+        if settings.CELERY_ENABLED:
+            batch_response = BatchValidationResponse(
+                batch_id=batch_id,
+                status="QUEUED",
+                total_providers=len(providers),
+                started_at=datetime.utcnow(),
+            )
+            # Persist initial queued state
+            cls._store_batch(batch_id, batch_response)
+
+            # Serialize providers to plain dicts for Celery transport
+            serializable = []
+            for p in providers:
+                try:
+                    serializable.append(p.model_dump() if hasattr(p, 'model_dump') else p.__dict__)
+                except Exception:
+                    serializable.append(p.__dict__ if hasattr(p, '__dict__') else dict(p))
+
+            # Send Celery task (import locally to avoid circular imports)
+            try:
+                from .celery_app import celery
+                celery.send_task("provider.validate_batch", args=[batch_id, serializable])
+            except Exception as e:
+                logger.warning(f"Failed to enqueue Celery task: {e}")
+
+            return batch_response
+
+        # Synchronous processing (no Celery)
+        batch_response = BatchValidationResponse(
+            batch_id=batch_id,
+            status="PROCESSING",
+            total_providers=len(providers),
+            started_at=datetime.utcnow()
+        )
+        
+        cls.batch_jobs[batch_id] = batch_response
+        
+        start_time = time.time()
+        results = []
+        failed = 0
+        
+        # Validate providers
+        for provider in providers:
+            try:
+                result = cls.validate_provider(provider)
+                results.append(result)
+            except Exception as e:
+                print(f"Error validating provider {provider.provider_name}: {e}")
+                failed += 1
+        
+        batch_response.results = results
+        batch_response.completed = len(providers) - failed
+        batch_response.failed = failed
+        batch_response.status = "COMPLETED"
+        batch_response.completed_at = datetime.utcnow()
+        batch_response.processing_time_ms = (time.time() - start_time) * 1000
+        
+        # Persist results
+        cls._store_batch(batch_id, batch_response)
+        return batch_response
+    
+    @classmethod
+    def get_batch_status(cls, batch_id: str) -> Optional[BatchValidationResponse]:
+        """Get the status of a batch validation job."""
+        return cls._load_batch(batch_id)
+
+    @classmethod
+    def get_batch_count(cls) -> int:
+        """Return number of persisted batch jobs (best-effort)."""
+        try:
+            if _redis_client:
+                keys = _redis_client.keys("batch:*")
+                return len(keys)
+            return len(cls.batch_jobs)
+        except Exception:
+            return len(cls.batch_jobs)
+
+    @classmethod
+    def get_all_results(cls) -> List[Dict[str, Any]]:
+        """Return all batch results (best-effort)."""
+        out = []
+        try:
+            if _redis_client:
+                keys = _redis_client.keys("batch:*")
+                for k in keys:
+                    raw = _redis_client.get(k)
+                    if raw:
+                        out.append(json.loads(raw))
+                return out
+            for b in cls.batch_jobs.values():
+                out.append(b.model_dump() if hasattr(b, 'model_dump') else b.__dict__)
+        except Exception as e:
+            logger.warning(f"Failed to list batches: {e}")
+        return out
+    
+    @classmethod
+    def recalculate_provider_compliance(cls, provider_id: str, provider_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Recalculate compliance for a single provider."""
+        return calculate_cri(provider_data)
+    
+    @classmethod
+    def get_provider_compliance_status(cls, provider_id: str) -> Optional[Dict[str, Any]]:
+        """Get stored compliance status for a provider."""
+        return get_provider_compliance(provider_id)
