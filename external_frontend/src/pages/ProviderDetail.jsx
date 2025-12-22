@@ -718,3 +718,43 @@ const ProviderDetail = () => {
                 </div>
             )}
 
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column: Comparison */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="glass-panel p-6 rounded-2xl">
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <Shield size={18} className="text-primary" /> Record Comparison
+                        </h3>
+
+                        <div className="space-y-4">
+                            {/* Phone Comparison */}
+                            <div className="grid grid-cols-2 gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase mb-1">Current Value</p>
+                                    <p className="text-slate-300">{provider.oldPhone || provider.phone}</p>
+                                </div>
+                                <div className="relative">
+                                    <p className="text-xs text-primary uppercase mb-1">New / Detected</p>
+                                    <p className="text-white font-medium">{provider.phone}</p>
+                                    {provider.oldPhone && provider.oldPhone !== provider.phone && (
+                                        <span className="absolute top-0 right-0 text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">CHANGED</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Address Comparison */}
+                            <div className="grid grid-cols-2 gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase mb-1">Current Address</p>
+                                    <p className="text-slate-300">{provider.oldAddress || provider.address}</p>
+                                </div>
+                                <div className="relative">
+                                    <p className="text-xs text-primary uppercase mb-1">New / Detected</p>
+                                    <p className="text-white font-medium">{provider.address}</p>
+                                    {provider.oldAddress && provider.oldAddress !== provider.address && (
+                                        <span className="absolute top-0 right-0 text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">CHANGED</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Specialty Comparison */}
