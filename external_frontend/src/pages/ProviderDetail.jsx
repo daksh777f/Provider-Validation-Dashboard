@@ -678,3 +678,43 @@ const ProviderDetail = () => {
                                     ))}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Extracted Information */}
+                    <div className="p-4 bg-green-500/10 rounded-xl border border-green-500/30">
+                        <h4 className="text-sm font-semibold text-green-300 mb-3 flex items-center gap-2">
+                            Extracted Information
+                        </h4>
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-start">
+                                <span className="text-xs text-slate-500">Address Confirmed:</span>
+                                <span className="text-sm text-slate-300 text-right max-w-[60%]">
+                                    {callVerification.extractedInformation.addressConfirmed}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-start">
+                                <span className="text-xs text-slate-500">Hospital Updated:</span>
+                                <span className="text-sm text-green-400 text-right max-w-[60%]">
+                                    {callVerification.extractedInformation.hospitalUpdated}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-white/10">
+                                <div>
+                                    <p className="text-xs text-slate-500 mb-1">Verifications Completed</p>
+                                    <p className="text-lg font-bold text-green-400">
+                                        {callVerification.extractedInformation.verificationsCompleted}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-slate-500 mb-1">Corrections Provided</p>
+                                    <p className="text-lg font-bold text-orange-400">
+                                        {callVerification.extractedInformation.correctionsProvided}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
