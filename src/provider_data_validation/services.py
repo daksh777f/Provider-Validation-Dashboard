@@ -383,3 +383,38 @@ class ValidationService:
         """
         Validate multiple providers asynchronously.
         Returns batch response with all results.
+        """
+        # If Celery is enabled, enqueue a background worker job and return queued response.
+        if settings.CELERY_ENABLED:
+            batch_response = BatchValidationResponse(
+                batch_id=batch_id,
+                status="QUEUED",
+                total_providers=len(providers),
+                started_at=datetime.utcnow(),
+            )
+            # Persist initial queued state
+            cls._store_batch(batch_id, batch_response)
+
+            # Serialize providers to plain dicts for Celery transport
+            serializable = []
+            for p in providers:
+                try:
+                    serializable.append(p.model_dump() if hasattr(p, 'model_dump') else p.__dict__)
+                except Exception:
+                    serializable.append(p.__dict__ if hasattr(p, '__dict__') else dict(p))
+
+            # Send Celery task (import locally to avoid circular imports)
+            try:
+                from .celery_app import celery
+                celery.send_task("provider.validate_batch", args=[batch_id, serializable])
+            except Exception as e:
+                logger.warning(f"Failed to enqueue Celery task: {e}")
+
+            return batch_response
+
+        # Synchronous processing (no Celery)
+        batch_response = BatchValidationResponse(
+            batch_id=batch_id,
+            status="PROCESSING",
+            total_providers=len(providers),
+            started_at=datetime.utcnow()
