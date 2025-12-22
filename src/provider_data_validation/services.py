@@ -418,3 +418,38 @@ class ValidationService:
             status="PROCESSING",
             total_providers=len(providers),
             started_at=datetime.utcnow()
+        )
+        
+        cls.batch_jobs[batch_id] = batch_response
+        
+        start_time = time.time()
+        results = []
+        failed = 0
+        
+        # Validate providers
+        for provider in providers:
+            try:
+                result = cls.validate_provider(provider)
+                results.append(result)
+            except Exception as e:
+                print(f"Error validating provider {provider.provider_name}: {e}")
+                failed += 1
+        
+        batch_response.results = results
+        batch_response.completed = len(providers) - failed
+        batch_response.failed = failed
+        batch_response.status = "COMPLETED"
+        batch_response.completed_at = datetime.utcnow()
+        batch_response.processing_time_ms = (time.time() - start_time) * 1000
+        
+        # Persist results
+        cls._store_batch(batch_id, batch_response)
+        return batch_response
+    
+    @classmethod
+    def get_batch_status(cls, batch_id: str) -> Optional[BatchValidationResponse]:
+        """Get the status of a batch validation job."""
+        return cls._load_batch(batch_id)
+
+    @classmethod
+    def get_batch_count(cls) -> int:
