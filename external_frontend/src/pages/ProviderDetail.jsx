@@ -838,3 +838,56 @@ const ProviderDetail = () => {
                                         )}
                                         {provider.licenseInfo.status && (
                                             <p className="text-slate-300">Status: <span className="text-white">{provider.licenseInfo.status}</span></p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            {provider.hospitalAffiliation && (
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase mb-1">Hospital Affiliation</p>
+                                    <div className="text-sm space-y-1">
+                                        {provider.hospitalAffiliation.hospital_name && (
+                                            <p className="text-white font-medium">{provider.hospitalAffiliation.hospital_name}</p>
+                                        )}
+                                        {provider.hospitalAffiliation.department && (
+                                            <p className="text-slate-300">Department: {provider.hospitalAffiliation.department}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column: Confidence Score */}
+                <div className="space-y-6">
+                    <h3 className="text-lg font-semibold mb-4">Confidence Score</h3>
+                    <div className="flex flex-col items-center justify-center py-4">
+                        <div className="relative w-32 h-32 flex items-center justify-center">
+                            <svg className="w-full h-full" viewBox="0 0 36 36">
+                                <path
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    stroke="#1e293b"
+                                    strokeWidth="3"
+                                />
+                                <path
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    stroke={provider.confidenceScore > 80 ? '#4ade80' : '#fbbf24'}
+                                    strokeWidth="3"
+                                    strokeDasharray={`${provider.confidenceScore}, 100`}
+                                    className="animate-[spin_1s_ease-out_reverse]"
+                                />
+                            </svg>
+                            <span className="absolute text-2xl font-bold text-white">{provider.confidenceScore}%</span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-2 text-center">Based on multi-source validation</p>
+                    </div>
+                </div>
+            </div>
+        </div >
+    );
+};
+
+export default ProviderDetail;
