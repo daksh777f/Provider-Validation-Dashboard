@@ -712,3 +712,45 @@ async def omni_dimension_webhook(request: Request):
         print(f"[ERROR] Error processing Omni webhook: {e}")
         import traceback
         traceback.print_exc()
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.get("/verify/call-data/{provider_id}")
+async def get_call_verification(provider_id: str):
+    """Get call verification data (Mocked for Demo)"""
+    # DEMO MODE: Return hardcoded conversation
+    import datetime
+    return {
+        "success": True,
+        "call_verification": {
+            "status": "completed",
+            "duration": "1m 20s",
+            "callId": "demo-call-123",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "callSummary": "Verified provider details. Address updated to Indiranagar, Bangalore. Hospital affiliation updated to Apollo Hospital. Alternate phone number 7123456789 confirmed.",
+            "fullConversation": [
+                {"time": "00:00", "sender": "system", "message": "Hello, this is the automated credential verification assistant calling to confirm your professional practise details. May I confirm that I'm speaking with Doctor R of Meta?"},
+                {"time": "00:05", "sender": "provider", "message": "Yes."},
+                {"time": "00:08", "sender": "system", "message": "Great, thank you. We have detected an address mismatch in our data. Is your practise still at MG Rd Bangalore 560001?"},
+                {"time": "00:15", "sender": "provider", "message": "No."},
+                {"time": "00:18", "sender": "system", "message": "Could you please state the correct address for your practise?"},
+                {"time": "00:25", "sender": "provider", "message": "Yes, it's Indiranagar, Bangalore."},
+                {"time": "00:30", "sender": "system", "message": "Got it. Your verified address is Indiranagar, Bangalore. Our records show an affiliation with Fortis Hospital. Do you still practise there?"},
+                {"time": "00:38", "sender": "provider", "message": "No."},
+                {"time": "00:40", "sender": "system", "message": "Thanks for letting me know. Could you please share your updated hospital affiliation?"},
+                {"time": "00:45", "sender": "provider", "message": "Yes, it's Apollo Hospital."},
+                {"time": "00:50", "sender": "system", "message": "Noted Your updated hospital affiliation is Apollo Hospital. Is there an alternate phone number where administrative teams can reach you?"},
+                {"time": "00:58", "sender": "provider", "message": "Yes."},
+                {"time": "01:00", "sender": "system", "message": "Please provide the alternate phone number for confirmation."},
+                {"time": "01:05", "sender": "provider", "message": "7123456789."},
+                {"time": "01:10", "sender": "system", "message": "Just to confirm, the alternate phone number is 7123456789, right?"},
+                {"time": "01:15", "sender": "provider", "message": "Yes."},
+                {"time": "01:18", "sender": "system", "message": "Thank you. Your verification is now complete. Have a great day."}
+            ],
+            "sentimentAnalysis": {
+                "overall": "Positive",
+                "confidence": 92,
+                "mood": "Cooperative",
