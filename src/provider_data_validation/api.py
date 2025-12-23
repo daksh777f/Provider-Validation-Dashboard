@@ -796,3 +796,45 @@ async def check_provider_compliance(provider_id: str):
                 "risk_level": "UNKNOWN",
                 "risk_color": "gray",
                 "factors": [],
+                "sanction_matches": [],
+                "calculated_at": None,
+                "message": "Compliance status not yet calculated. Use POST /compliance/recalculate/{provider_id} to calculate."
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/compliance/recalculate/{provider_id}")
+async def recalculate_compliance(provider_id: str, provider_data: Optional[dict] = Body(None)):
+    """Recalculate compliance risk for a provider. Accepts optional provider data."""
+    try:
+        # If no provider data provided, create minimal dataset
+        if not provider_data:
+            provider_data = {
+                "id": provider_id,
+                "full_name": "Unknown Provider",
+                "npi": "",
+                "license": "",
+                "board_certified": False
+            }
+        else:
+            provider_data["id"] = provider_id
+        
+        result = ValidationService.recalculate_provider_compliance(provider_id, provider_data)
+        return {"success": True, "data": result}
+    except Exception as e:
+        logger.error(f"Compliance recalculation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Recalculation failed: {str(e)}")
+
+
+@app.get("/compliance/sanctions/search")
+async def search_sanctions(name: str, threshold: int = 80):
+    """Search sanction registry for a provider name."""
+    try:
+        from .compliance.sanction_checker import check_sanctions
+        matches = check_sanctions(name, threshold)
+        return {"success": True, "matches": matches}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
