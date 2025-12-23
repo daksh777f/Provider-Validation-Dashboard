@@ -758,3 +758,136 @@ const ProviderDetail = () => {
                             </div>
 
                             {/* Specialty Comparison */}
+                            {provider.oldSpecialty && provider.oldSpecialty !== provider.specialty && (
+                                <div className="grid grid-cols-2 gap-4 p-4 bg-white/5 rounded-xl border border-yellow-500/30">
+                                    <div>
+                                        <p className="text-xs text-slate-500 uppercase mb-1">Current Specialty</p>
+                                        <p className="text-slate-300">{provider.oldSpecialty}</p>
+                                    </div>
+                                    <div className="relative">
+                                        <p className="text-xs text-primary uppercase mb-1">New / Detected</p>
+                                        <p className="text-white font-medium">{provider.specialty}</p>
+                                        <span className="absolute top-0 right-0 text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">MISMATCH</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Next Steps */}
+                    {provider.nextSteps && provider.nextSteps.length > 0 && (
+                        <div className="glass-panel p-6 rounded-2xl border border-primary/30">
+                            <h3 className="text-lg font-semibold mb-4 text-primary">📋 Recommended Next Steps</h3>
+                            <ul className="space-y-2">
+                                {provider.nextSteps.map((step, idx) => (
+                                    <li key={idx} className="flex items-start gap-3 text-slate-300">
+                                        <span className="text-primary mt-0.5">→</span>
+                                        <span>{step}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    <div className="glass-panel p-6 rounded-2xl">
+                        <h3 className="text-lg font-semibold mb-4">Source Evidence</h3>
+                        <div className="space-y-3">
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase mb-2">Matched Sources ({provider.sourcesMatched?.length || 0})</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {provider.sourcesMatched && provider.sourcesMatched.length > 0 ? (
+                                        provider.sourcesMatched.map((source, index) => {
+                                            const sourceNames = {
+                                                'npi': 'NPI Registry',
+                                                'license': 'License Registry',
+                                                'hospital': 'Hospital Roster',
+                                                'maps': 'Maps Listing',
+                                                'clinic': 'Clinic Website',
+                                                'telemedicine': 'Telemedicine Directory'
+                                            };
+                                            return (
+                                                <span key={index} className="px-3 py-1.5 bg-neon-mint/20 text-neon-mint border border-neon-mint/30 rounded-lg text-xs font-medium">
+                                                    ✓ {sourceNames[source] || source.toUpperCase()}
+                                                </span>
+                                            );
+                                        })
+                                    ) : (
+                                        <span className="px-3 py-1 bg-slate-700/30 text-slate-400 border border-slate-600/30 rounded-lg text-xs">
+                                            No sources matched
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="px-3 py-1 bg-slate-700/30 text-slate-400 border border-slate-600/30 rounded-lg text-xs">
+                                    Last Checked: {new Date(provider.lastUpdated).toLocaleDateString()}
+                                </span>
+                            </div>
+                            {provider.npi && provider.npi !== 'N/A' && (
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase mb-1">NPI Number</p>
+                                    <p className="text-white font-mono text-sm">{provider.npi}</p>
+                                </div>
+                            )}
+                            {provider.licenseInfo && (
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase mb-1">License Information</p>
+                                    <div className="text-sm space-y-1">
+                                        {provider.licenseInfo.license_number && (
+                                            <p className="text-slate-300">Number: <span className="text-white font-mono">{provider.licenseInfo.license_number}</span></p>
+                                        )}
+                                        {provider.licenseInfo.status && (
+                                            <p className="text-slate-300">Status: <span className="text-white">{provider.licenseInfo.status}</span></p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            {provider.hospitalAffiliation && (
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase mb-1">Hospital Affiliation</p>
+                                    <div className="text-sm space-y-1">
+                                        {provider.hospitalAffiliation.hospital_name && (
+                                            <p className="text-white font-medium">{provider.hospitalAffiliation.hospital_name}</p>
+                                        )}
+                                        {provider.hospitalAffiliation.department && (
+                                            <p className="text-slate-300">Department: {provider.hospitalAffiliation.department}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column: Confidence Score */}
+                <div className="space-y-6">
+                    <h3 className="text-lg font-semibold mb-4">Confidence Score</h3>
+                    <div className="flex flex-col items-center justify-center py-4">
+                        <div className="relative w-32 h-32 flex items-center justify-center">
+                            <svg className="w-full h-full" viewBox="0 0 36 36">
+                                <path
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    stroke="#1e293b"
+                                    strokeWidth="3"
+                                />
+                                <path
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    stroke={provider.confidenceScore > 80 ? '#4ade80' : '#fbbf24'}
+                                    strokeWidth="3"
+                                    strokeDasharray={`${provider.confidenceScore}, 100`}
+                                    className="animate-[spin_1s_ease-out_reverse]"
+                                />
+                            </svg>
+                            <span className="absolute text-2xl font-bold text-white">{provider.confidenceScore}%</span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-2 text-center">Based on multi-source validation</p>
+                    </div>
+                </div>
+            </div>
+        </div >
+    );
+};
+
+export default ProviderDetail;

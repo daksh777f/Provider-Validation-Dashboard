@@ -712,3 +712,175 @@ async def omni_dimension_webhook(request: Request):
         print(f"[ERROR] Error processing Omni webhook: {e}")
         import traceback
         traceback.print_exc()
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.get("/verify/call-data/{provider_id}")
+async def get_call_verification(provider_id: str):
+    """Get call verification data (Mocked for Demo)"""
+    # DEMO MODE: Return hardcoded conversation
+    import datetime
+    return {
+        "success": True,
+        "call_verification": {
+            "status": "completed",
+            "duration": "1m 20s",
+            "callId": "demo-call-123",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "callSummary": "Verified provider details. Address updated to Indiranagar, Bangalore. Hospital affiliation updated to Apollo Hospital. Alternate phone number 7123456789 confirmed.",
+            "fullConversation": [
+                {"time": "00:00", "sender": "system", "message": "Hello, this is the automated credential verification assistant calling to confirm your professional practise details. May I confirm that I'm speaking with Doctor R of Meta?"},
+                {"time": "00:05", "sender": "provider", "message": "Yes."},
+                {"time": "00:08", "sender": "system", "message": "Great, thank you. We have detected an address mismatch in our data. Is your practise still at MG Rd Bangalore 560001?"},
+                {"time": "00:15", "sender": "provider", "message": "No."},
+                {"time": "00:18", "sender": "system", "message": "Could you please state the correct address for your practise?"},
+                {"time": "00:25", "sender": "provider", "message": "Yes, it's Indiranagar, Bangalore."},
+                {"time": "00:30", "sender": "system", "message": "Got it. Your verified address is Indiranagar, Bangalore. Our records show an affiliation with Fortis Hospital. Do you still practise there?"},
+                {"time": "00:38", "sender": "provider", "message": "No."},
+                {"time": "00:40", "sender": "system", "message": "Thanks for letting me know. Could you please share your updated hospital affiliation?"},
+                {"time": "00:45", "sender": "provider", "message": "Yes, it's Apollo Hospital."},
+                {"time": "00:50", "sender": "system", "message": "Noted Your updated hospital affiliation is Apollo Hospital. Is there an alternate phone number where administrative teams can reach you?"},
+                {"time": "00:58", "sender": "provider", "message": "Yes."},
+                {"time": "01:00", "sender": "system", "message": "Please provide the alternate phone number for confirmation."},
+                {"time": "01:05", "sender": "provider", "message": "7123456789."},
+                {"time": "01:10", "sender": "system", "message": "Just to confirm, the alternate phone number is 7123456789, right?"},
+                {"time": "01:15", "sender": "provider", "message": "Yes."},
+                {"time": "01:18", "sender": "system", "message": "Thank you. Your verification is now complete. Have a great day."}
+            ],
+            "sentimentAnalysis": {
+                "overall": "Positive",
+                "confidence": 92,
+                "mood": "Cooperative",
+                "keyEmotions": ["Professional", "Patient", "Clear"]
+            },
+            "extractedInformation": {
+                "addressConfirmed": "Indiranagar, Bangalore",
+                "hospitalUpdated": "Apollo Hospital",
+                "verificationsCompleted": "3/3",
+                "correctionsProvided": "2"
+            }
+        }
+    }
+
+
+# ==================== Compliance Intelligence ====================
+
+@app.get("/compliance/ingest")
+async def ingest_sanctions():
+    """Trigger sanction registry ingestion from OIG and SAM.gov."""
+    try:
+        from .compliance.sanction_ingestion import ingest_sanctions as run_ingest
+        result = await run_ingest()
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
+
+
+@app.get("/compliance/check/{provider_id}")
+async def check_provider_compliance(provider_id: str):
+    """Get compliance status for a specific provider. Auto-calculates if not found."""
+    try:
+        status = ValidationService.get_provider_compliance_status(provider_id)
+        if status:
+            return {"success": True, "data": status}
+        
+        # If not found, return empty state with instructions
+        return {
+            "success": True, 
+            "data": {
+                "provider_id": provider_id,
+                "cri_score": 0,
+                "risk_level": "UNKNOWN",
+                "risk_color": "gray",
+                "factors": [],
+                "sanction_matches": [],
+                "calculated_at": None,
+                "message": "Compliance status not yet calculated. Use POST /compliance/recalculate/{provider_id} to calculate."
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/compliance/recalculate/{provider_id}")
+async def recalculate_compliance(provider_id: str, provider_data: Optional[dict] = Body(None)):
+    """Recalculate compliance risk for a provider. Accepts optional provider data."""
+    try:
+        # If no provider data provided, create minimal dataset
+        if not provider_data:
+            provider_data = {
+                "id": provider_id,
+                "full_name": "Unknown Provider",
+                "npi": "",
+                "license": "",
+                "board_certified": False
+            }
+        else:
+            provider_data["id"] = provider_id
+        
+        result = ValidationService.recalculate_provider_compliance(provider_id, provider_data)
+        return {"success": True, "data": result}
+    except Exception as e:
+        logger.error(f"Compliance recalculation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Recalculation failed: {str(e)}")
+
+
+@app.get("/compliance/sanctions/search")
+async def search_sanctions(name: str, threshold: int = 80):
+    """Search sanction registry for a provider name."""
+    try:
+        from .compliance.sanction_checker import check_sanctions
+        matches = check_sanctions(name, threshold)
+        return {"success": True, "matches": matches}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== Root ====================
+
+@app.get("/")
+async def root():
+    """API root with documentation links."""
+    return {
+        "name": "Provider Data Validation System",
+        "version": "1.0.0",
+        "status": "running",
+        "documentation": {
+            "swagger": "/docs",
+            "redoc": "/redoc",
+            "openapi": "/openapi.json"
+        },
+        "endpoints": {
+            "health": "GET /health",
+            "stats": "GET /stats",
+            "validate_single": "POST /validate",
+            "validate_batch": "POST /validate/batch",
+            "batch_status": "GET /batch/{batch_id}",
+            "upload_file": "POST /upload",
+            "validate_file": "POST /upload/{file_id}/validate",
+            "get_provider": "GET /validate/{provider_id}",
+            "drift_monitor": "POST /drift-monitor",
+            "compliance_ingest": "GET /compliance/ingest",
+            "compliance_check": "GET /compliance/check/{provider_id}",
+            "compliance_recalculate": "POST /compliance/recalculate/{provider_id}",
+            "sanctions_search": "GET /compliance/sanctions/search"
+        }
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    # Get port from environment or use default
+    port = int(os.getenv("PORT", 8000))
+    host = os.getenv("HOST", "0.0.0.0")
+    
+    uvicorn.run(
+        "provider_data_validation.api:app",
+        host=host,
+        port=port,
+        reload=True
+    )
