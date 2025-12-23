@@ -798,3 +798,43 @@ const ProviderDetail = () => {
                                     {provider.sourcesMatched && provider.sourcesMatched.length > 0 ? (
                                         provider.sourcesMatched.map((source, index) => {
                                             const sourceNames = {
+                                                'npi': 'NPI Registry',
+                                                'license': 'License Registry',
+                                                'hospital': 'Hospital Roster',
+                                                'maps': 'Maps Listing',
+                                                'clinic': 'Clinic Website',
+                                                'telemedicine': 'Telemedicine Directory'
+                                            };
+                                            return (
+                                                <span key={index} className="px-3 py-1.5 bg-neon-mint/20 text-neon-mint border border-neon-mint/30 rounded-lg text-xs font-medium">
+                                                    ✓ {sourceNames[source] || source.toUpperCase()}
+                                                </span>
+                                            );
+                                        })
+                                    ) : (
+                                        <span className="px-3 py-1 bg-slate-700/30 text-slate-400 border border-slate-600/30 rounded-lg text-xs">
+                                            No sources matched
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="px-3 py-1 bg-slate-700/30 text-slate-400 border border-slate-600/30 rounded-lg text-xs">
+                                    Last Checked: {new Date(provider.lastUpdated).toLocaleDateString()}
+                                </span>
+                            </div>
+                            {provider.npi && provider.npi !== 'N/A' && (
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase mb-1">NPI Number</p>
+                                    <p className="text-white font-mono text-sm">{provider.npi}</p>
+                                </div>
+                            )}
+                            {provider.licenseInfo && (
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase mb-1">License Information</p>
+                                    <div className="text-sm space-y-1">
+                                        {provider.licenseInfo.license_number && (
+                                            <p className="text-slate-300">Number: <span className="text-white font-mono">{provider.licenseInfo.license_number}</span></p>
+                                        )}
+                                        {provider.licenseInfo.status && (
+                                            <p className="text-slate-300">Status: <span className="text-white">{provider.licenseInfo.status}</span></p>
