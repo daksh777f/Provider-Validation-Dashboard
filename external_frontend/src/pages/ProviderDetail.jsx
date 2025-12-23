@@ -758,3 +758,43 @@ const ProviderDetail = () => {
                             </div>
 
                             {/* Specialty Comparison */}
+                            {provider.oldSpecialty && provider.oldSpecialty !== provider.specialty && (
+                                <div className="grid grid-cols-2 gap-4 p-4 bg-white/5 rounded-xl border border-yellow-500/30">
+                                    <div>
+                                        <p className="text-xs text-slate-500 uppercase mb-1">Current Specialty</p>
+                                        <p className="text-slate-300">{provider.oldSpecialty}</p>
+                                    </div>
+                                    <div className="relative">
+                                        <p className="text-xs text-primary uppercase mb-1">New / Detected</p>
+                                        <p className="text-white font-medium">{provider.specialty}</p>
+                                        <span className="absolute top-0 right-0 text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">MISMATCH</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Next Steps */}
+                    {provider.nextSteps && provider.nextSteps.length > 0 && (
+                        <div className="glass-panel p-6 rounded-2xl border border-primary/30">
+                            <h3 className="text-lg font-semibold mb-4 text-primary">📋 Recommended Next Steps</h3>
+                            <ul className="space-y-2">
+                                {provider.nextSteps.map((step, idx) => (
+                                    <li key={idx} className="flex items-start gap-3 text-slate-300">
+                                        <span className="text-primary mt-0.5">→</span>
+                                        <span>{step}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    <div className="glass-panel p-6 rounded-2xl">
+                        <h3 className="text-lg font-semibold mb-4">Source Evidence</h3>
+                        <div className="space-y-3">
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase mb-2">Matched Sources ({provider.sourcesMatched?.length || 0})</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {provider.sourcesMatched && provider.sourcesMatched.length > 0 ? (
+                                        provider.sourcesMatched.map((source, index) => {
+                                            const sourceNames = {
