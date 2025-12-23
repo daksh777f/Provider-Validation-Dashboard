@@ -838,3 +838,49 @@ async def search_sanctions(name: str, threshold: int = 80):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# ==================== Root ====================
+
+@app.get("/")
+async def root():
+    """API root with documentation links."""
+    return {
+        "name": "Provider Data Validation System",
+        "version": "1.0.0",
+        "status": "running",
+        "documentation": {
+            "swagger": "/docs",
+            "redoc": "/redoc",
+            "openapi": "/openapi.json"
+        },
+        "endpoints": {
+            "health": "GET /health",
+            "stats": "GET /stats",
+            "validate_single": "POST /validate",
+            "validate_batch": "POST /validate/batch",
+            "batch_status": "GET /batch/{batch_id}",
+            "upload_file": "POST /upload",
+            "validate_file": "POST /upload/{file_id}/validate",
+            "get_provider": "GET /validate/{provider_id}",
+            "drift_monitor": "POST /drift-monitor",
+            "compliance_ingest": "GET /compliance/ingest",
+            "compliance_check": "GET /compliance/check/{provider_id}",
+            "compliance_recalculate": "POST /compliance/recalculate/{provider_id}",
+            "sanctions_search": "GET /compliance/sanctions/search"
+        }
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    # Get port from environment or use default
+    port = int(os.getenv("PORT", 8000))
+    host = os.getenv("HOST", "0.0.0.0")
+    
+    uvicorn.run(
+        "provider_data_validation.api:app",
+        host=host,
+        port=port,
+        reload=True
+    )
