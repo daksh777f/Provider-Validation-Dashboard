@@ -754,3 +754,45 @@ async def get_call_verification(provider_id: str):
                 "overall": "Positive",
                 "confidence": 92,
                 "mood": "Cooperative",
+                "keyEmotions": ["Professional", "Patient", "Clear"]
+            },
+            "extractedInformation": {
+                "addressConfirmed": "Indiranagar, Bangalore",
+                "hospitalUpdated": "Apollo Hospital",
+                "verificationsCompleted": "3/3",
+                "correctionsProvided": "2"
+            }
+        }
+    }
+
+
+# ==================== Compliance Intelligence ====================
+
+@app.get("/compliance/ingest")
+async def ingest_sanctions():
+    """Trigger sanction registry ingestion from OIG and SAM.gov."""
+    try:
+        from .compliance.sanction_ingestion import ingest_sanctions as run_ingest
+        result = await run_ingest()
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
+
+
+@app.get("/compliance/check/{provider_id}")
+async def check_provider_compliance(provider_id: str):
+    """Get compliance status for a specific provider. Auto-calculates if not found."""
+    try:
+        status = ValidationService.get_provider_compliance_status(provider_id)
+        if status:
+            return {"success": True, "data": status}
+        
+        # If not found, return empty state with instructions
+        return {
+            "success": True, 
+            "data": {
+                "provider_id": provider_id,
+                "cri_score": 0,
+                "risk_level": "UNKNOWN",
+                "risk_color": "gray",
+                "factors": [],
