@@ -215,3 +215,35 @@ def process_sms_response(from_phone: str, message_body: str) -> tuple[bool, str]
             
         elif "NO" in message_body or "N" == message_body:
             # Needs corrections
+            session.initial_response = "NO"
+            session.status = VerificationStatus.CORRECTIONS_NEEDED
+            session.responded_at = datetime.utcnow()
+            verification_store.update_session(session)
+            
+            # Ask for corrections
+            correction_request = format_correction_request_sms(session.provider_name)
+            sms_sid = send_verification_sms(from_phone, correction_request)
+            session.sms_count += 1
+            verification_store.update_session(session)
+            
+            return True, "Awaiting corrections"
+        else:
+            # Invalid response
+            reply = f"Please reply with YES to confirm or NO if corrections are needed."
+            send_verification_sms(from_phone, reply)
+            return False, "Invalid response, prompted for YES/NO"
+    
+    elif session.status == VerificationStatus.CORRECTIONS_NEEDED:
+        # Receiving corrections
+        session.correction_text = message_body
+        session.status = VerificationStatus.COMPLETED
+        session.completed_at = datetime.utcnow()
+        verification_store.update_session(session)
+        
+        reply = f"Thank you, {session.provider_name}! We've received your corrections and will update our records."
+        send_verification_sms(from_phone, reply)
+        return True, "Corrections received"
+    
+    else:
+        # Session already completed/closed
+        return False, "This verification session has already been completed."
