@@ -28,3 +28,25 @@ build/
 # Node.js
 node_modules/
 external_frontend/dist/
+
+# Secrets
+.env.*
+!.env.example
+*.pem
+*.key
+
+# OS / editor
+Thumbs.db
+
+# Node
+.next/
+out/
+.vercel/
+npm-debug.log*
+yarn-error.log*
+
+# Python
+.venv/
+venv/
+.ipynb_checkpoints/
+.pytest_cache/
